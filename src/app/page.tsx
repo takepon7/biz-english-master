@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Briefcase,
@@ -11,8 +11,15 @@ import {
   LogOut,
   Menu,
   ChevronDown,
+  Volume2,
 } from "lucide-react";
-import { ConversationScreen, type SceneId } from "@/components/ConversationScreen";
+import { ConversationScreen, type SceneId, type PracticeRecord } from "@/components/ConversationScreen";
+import {
+  getPracticeHistory,
+  addPracticeItem,
+  type PracticeHistoryItem,
+} from "@/lib/practiceHistory";
+import { getPreferredEnglishVoice } from "@/lib/speechVoice";
 
 const SCENES: {
   id: SceneId;
@@ -58,10 +65,103 @@ const SCENES: {
   },
 ];
 
+function formatHistoryTime(timestamp: number): string {
+  return new Date(timestamp).toLocaleTimeString("ja-JP", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+function HistoryDetailPanel({
+  item,
+  scenarioLabel,
+  onClose,
+}: {
+  item: PracticeHistoryItem;
+  scenarioLabel: string;
+  onClose: () => void;
+}) {
+  const [isSpeaking, setIsSpeaking] = useState(false);
+
+  const speak = useCallback((text: string) => {
+    if (typeof window === "undefined" || !text.trim()) return;
+    const synth = window.speechSynthesis;
+    synth.cancel();
+    const u = new SpeechSynthesisUtterance(text.trim());
+    u.lang = "en-US";
+    u.rate = 0.95;
+    const preferred = getPreferredEnglishVoice();
+    if (preferred) u.voice = preferred;
+    u.onstart = () => setIsSpeaking(true);
+    u.onend = u.onerror = () => setIsSpeaking(false);
+    synth.speak(u);
+  }, []);
+
+  useEffect(() => () => window.speechSynthesis?.cancel(), []);
+
+  const text = item.refactoredText ?? (item as unknown as { refactoredEnglish?: string }).refactoredEnglish;
+  const userText = item.userInput ?? (item as unknown as { userMessage?: string }).userMessage;
+
+  return (
+    <div className="flex h-full flex-col overflow-y-auto px-4 py-4">
+      <button
+        type="button"
+        onClick={onClose}
+        className="mb-4 self-start rounded-lg px-3 py-2 text-sm text-slate-400 hover:bg-slate-800 hover:text-white"
+      >
+        ← 一覧に戻る
+      </button>
+      <div className="space-y-4 text-sm">
+        <p className="text-xs text-slate-500">
+          {scenarioLabel} · {formatHistoryTime(item.timestamp)}
+        </p>
+        <div>
+          <p className="mb-1 text-xs font-medium uppercase tracking-wider text-slate-500">発話内容</p>
+          <p className="rounded-lg bg-slate-800/80 px-3 py-2 text-slate-200">{userText || "—"}</p>
+        </div>
+        <div>
+          <div className="mb-1 flex items-center justify-between gap-2">
+            <p className="text-xs font-medium uppercase tracking-wider text-slate-500">プロの英語（修正案）</p>
+            {text && (
+              <button
+                type="button"
+                onClick={() => speak(text)}
+                aria-label="読み上げる"
+                className={`shrink-0 rounded p-1.5 text-emerald-400 hover:bg-emerald-800/50 ${isSpeaking ? "animate-pulse text-sky-300" : ""}`}
+              >
+                <Volume2 className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+          <p className="rounded-lg border border-emerald-500/30 bg-emerald-950/30 px-3 py-2 text-emerald-100">
+            {text || "—"}
+          </p>
+        </div>
+        <div>
+          <p className="mb-1 text-xs font-medium uppercase tracking-wider text-slate-500">コーチングノート</p>
+          <p className="rounded-lg bg-slate-800/80 px-3 py-2 italic text-slate-300">{item.coachingNote || "—"}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function Home() {
   const [selectedScene, setSelectedScene] = useState<SceneId>("job-interview");
   const [showJapanese, setShowJapanese] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [historyItems, setHistoryItems] = useState<PracticeHistoryItem[]>([]);
+  const [selectedHistoryItem, setSelectedHistoryItem] = useState<PracticeHistoryItem | null>(null);
+
+  // localStorage はクライアントのみのため、useEffect で読み込みハイドレーションエラーを防ぐ
+  useEffect(() => {
+    setHistoryItems(getPracticeHistory());
+  }, []);
+
+  const handlePracticeComplete = useCallback((record: PracticeRecord) => {
+    addPracticeItem(record);
+    setHistoryItems(getPracticeHistory());
+  }, []);
 
   return (
     <div className="flex min-h-screen bg-slate-900 text-white">
@@ -128,10 +228,50 @@ export default function Home() {
               </li>
             ))}
           </ul>
+
+          <div className="mt-4 border-t border-slate-700/50 pt-3">
+            <p className="mb-2 px-4 text-xs font-medium uppercase tracking-wider text-slate-500">
+              Practice History
+            </p>
+            <ul className="space-y-0.5 px-2">
+              {historyItems.length === 0 ? (
+                <li className="px-3 py-2 text-xs text-slate-500">
+                  まだ履歴はありません
+                </li>
+              ) : (
+                historyItems.map((item) => {
+                  const sceneInfo = SCENES.find((s) => s.id === item.scenario);
+                  const scenarioLabel = sceneInfo?.sublabel ?? sceneInfo?.label ?? item.scenario;
+                  return (
+                    <li key={item.id}>
+                      <button
+                        type="button"
+                        data-testid={`history-${item.id}`}
+                        onClick={() => {
+                          setSelectedHistoryItem(item);
+                          setSidebarOpen(false);
+                        }}
+                        className={`flex w-full flex-col gap-0.5 rounded-lg px-3 py-2 text-left text-slate-300 hover:bg-slate-800 hover:text-slate-100 ${
+                          selectedHistoryItem?.id === item.id ? "bg-slate-800 text-slate-100" : ""
+                        }`}
+                      >
+                        <span className="truncate text-sm font-medium">
+                          {scenarioLabel}
+                        </span>
+                        <span className="text-xs text-slate-500">
+                          {formatHistoryTime(item.timestamp)}
+                        </span>
+                      </button>
+                    </li>
+                  );
+                })
+              )}
+            </ul>
+          </div>
         </nav>
       </aside>
 
-      {/* メイン：会話エリア（サイドバー幅分だけ右に配置、モバイルは全幅） */}
+      {/* メイン：会話エリア または 履歴詳細（クリック時はメイン画面に表示） */}
       <main className="relative min-h-0 min-w-0 flex-1 flex flex-col">
         <button
           type="button"
@@ -142,23 +282,36 @@ export default function Home() {
           <Menu className="h-5 w-5" />
         </button>
 
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={selectedScene}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="relative min-h-full min-w-full flex-1"
-          >
-            <ConversationScreen
-              scene={selectedScene}
-              onBack={() => setSidebarOpen(true)}
-              showJapanese={showJapanese}
-              onShowJapaneseChange={setShowJapanese}
-            />
-          </motion.div>
-        </AnimatePresence>
+        {selectedHistoryItem ? (
+          <HistoryDetailPanel
+            item={selectedHistoryItem}
+            scenarioLabel={
+              SCENES.find((s) => s.id === selectedHistoryItem.scenario)?.sublabel ??
+              SCENES.find((s) => s.id === selectedHistoryItem.scenario)?.label ??
+              selectedHistoryItem.scenario
+            }
+            onClose={() => setSelectedHistoryItem(null)}
+          />
+        ) : (
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={selectedScene}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="relative min-h-full min-w-full flex-1"
+            >
+              <ConversationScreen
+                scene={selectedScene}
+                onBack={() => setSidebarOpen(true)}
+                showJapanese={showJapanese}
+                onShowJapaneseChange={setShowJapanese}
+                onPracticeComplete={handlePracticeComplete}
+              />
+            </motion.div>
+          </AnimatePresence>
+        )}
       </main>
     </div>
   );

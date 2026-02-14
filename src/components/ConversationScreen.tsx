@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Mic,
   MicOff,
@@ -9,9 +10,12 @@ import {
   RefreshCw,
   ChevronDown,
   ChevronUp,
+  Volume2,
 } from "lucide-react";
+import { getPreferredEnglishVoice } from "@/lib/speechVoice";
 import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
 import { createStreamParser } from "@/lib/streamParser";
+import { ResponseSkeleton } from "@/components/ResponseSkeleton";
 
 export type SceneId =
   | "job-interview"
@@ -61,11 +65,19 @@ export interface CoachResponse {
   japanese_translation?: { refactored: string; nextDialogue: string };
 }
 
+export interface PracticeRecord {
+  scenario: SceneId;
+  userInput: string;
+  refactoredText: string;
+  coachingNote: string;
+}
+
 interface ConversationScreenProps {
   scene: SceneId;
   onBack?: () => void;
   showJapanese: boolean;
   onShowJapaneseChange?: (value: boolean) => void;
+  onPracticeComplete?: (record: PracticeRecord) => void;
 }
 
 export function ConversationScreen({
@@ -73,6 +85,7 @@ export function ConversationScreen({
   onBack,
   showJapanese,
   onShowJapaneseChange,
+  onPracticeComplete,
 }: ConversationScreenProps) {
   const [partnerLine, setPartnerLine] = useState(SCENE_OPENING[scene]);
   const [partnerLineJapanese, setPartnerLineJapanese] = useState(
@@ -82,6 +95,8 @@ export function ConversationScreen({
     { role: "user" | "partner"; text: string }[]
   >([]);
   const [lastCoach, setLastCoach] = useState<CoachResponse | null>(null);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const speechUtteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
   const [streamingState, setStreamingState] = useState<{
     refactored: string;
     note: string;
@@ -153,6 +168,12 @@ export function ConversationScreen({
             nextDialogue: final.nextJp,
           },
         });
+        onPracticeComplete?.({
+          scenario: scene,
+          userInput: text.trim(),
+          refactoredText: final.refactored,
+          coachingNote: final.note,
+        });
         if (final.next) {
           setPartnerLine(final.next);
           setPartnerLineJapanese(final.nextJp);
@@ -170,8 +191,33 @@ export function ConversationScreen({
         setLoading(false);
       }
     },
-    [scene, history]
+    [scene, history, onPracticeComplete]
   );
+
+  const speakRefactored = useCallback((text: string) => {
+    if (typeof window === "undefined" || !text.trim()) return;
+    const synth = window.speechSynthesis;
+    synth.cancel();
+    const u = new SpeechSynthesisUtterance(text.trim());
+    u.lang = "en-US";
+    u.rate = 0.95;
+    const preferred = getPreferredEnglishVoice();
+    if (preferred) u.voice = preferred;
+    speechUtteranceRef.current = u;
+    u.onstart = () => setIsSpeaking(true);
+    u.onend = u.onerror = () => {
+      setIsSpeaking(false);
+      speechUtteranceRef.current = null;
+    };
+    synth.speak(u);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      window.speechSynthesis?.cancel();
+      speechUtteranceRef.current = null;
+    };
+  }, []);
 
   useEffect(() => {
     if (!streamingState && !lastCoach) return;
@@ -282,23 +328,54 @@ export function ConversationScreen({
           </div>
         </div>
 
-        {/* プロの英語・コーチング・反復練習（ストリーミング中はリアルタイム表示＋震え・カーソル） */}
-        {hasResult && (
-          <div
-            ref={resultBlockRef}
-            className={`mb-4 space-y-3 ${isStreaming ? "animate-stream-shake" : ""}`}
-            style={isStreaming ? { animationIterationCount: "infinite", animationDuration: "0.6s" } : undefined}
-          >
-            <div data-testid="refactored-block" className="rounded-xl border border-emerald-500/40 bg-emerald-950/30 px-4 py-3">
+        <AnimatePresence mode="wait">
+          {loading && !streamingState ? (
+            <motion.div
+              key="skeleton"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.25, ease: "easeOut" }}
+            >
+              <ResponseSkeleton />
+            </motion.div>
+          ) : hasResult ? (
+            <motion.div
+              key="result"
+              ref={resultBlockRef}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.25, ease: "easeOut" }}
+              className={`mb-4 space-y-3 ${isStreaming ? "animate-stream-shake" : ""}`}
+              style={isStreaming ? { animationIterationCount: "infinite", animationDuration: "0.6s" } : undefined}
+            >
+              <div data-testid="refactored-block" className="rounded-xl border border-emerald-500/40 bg-emerald-950/30 px-4 py-3">
               <p className="mb-1 text-xs font-medium uppercase tracking-wider text-emerald-400">
                 プロの英語
               </p>
-              <p className="text-emerald-100 leading-relaxed">
-                {displayRefactored}
-                {isStreaming && (
-                  <span className="animate-stream-cursor ml-0.5 inline-block h-4 w-0.5 bg-emerald-400 align-middle" aria-hidden />
+              <div className="flex items-start justify-between gap-2">
+                <p className="min-w-0 flex-1 text-emerald-100 leading-relaxed">
+                  {displayRefactored}
+                  {isStreaming && (
+                    <span className="animate-stream-cursor ml-0.5 inline-block h-4 w-0.5 bg-emerald-400 align-middle" aria-hidden />
+                  )}
+                </p>
+                {displayRefactored && (
+                  <button
+                    type="button"
+                    onClick={() => speakRefactored(displayRefactored)}
+                    aria-label="Refactored English を読み上げる"
+                    className={`shrink-0 rounded p-1.5 focus:outline-none focus:ring-2 focus:ring-emerald-500 ${
+                      isSpeaking
+                        ? "animate-pulse text-sky-300 hover:text-sky-200"
+                        : "text-emerald-400 hover:bg-emerald-800/50 hover:text-emerald-300"
+                    }`}
+                  >
+                    <Volume2 className="h-4 w-4" aria-hidden />
+                  </button>
                 )}
-              </p>
+              </div>
               {showJapanese && displayRefactoredJp && (
                 <p data-testid="refactored-jp" className="mt-2 border-t border-emerald-800/50 pt-2 text-xs text-emerald-300/90">
                   {displayRefactoredJp}
@@ -346,8 +423,9 @@ export function ConversationScreen({
                 次へ進む
               </button>
             </div>
-          </div>
-        )}
+            </motion.div>
+          ) : null}
+        </AnimatePresence>
 
         {error && (
           <p className="mb-2 rounded-lg bg-red-900/40 px-3 py-2 text-sm text-red-200">

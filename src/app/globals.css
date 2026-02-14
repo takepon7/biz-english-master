@@ -43,3 +43,21 @@ body {
 .animate-stream-cursor {
   animation: stream-cursor-blink 0.8s step-end infinite;
 }
+
+@keyframes skeleton-glow {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+@keyframes tts-wave {
+  0%, 100% { transform: scaleY(1); }
+  50% { transform: scaleY(0.6); }
+}
+
+.animate-skeleton-glow {
+  animation: skeleton-glow 1.5s ease-in-out infinite;
+}
+
+.animate-tts-wave {
+  animation: tts-wave 0.5s ease-in-out infinite;
+}
