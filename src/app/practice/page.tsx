@@ -324,6 +324,7 @@ export default function PracticePage() {
                 onShowJapaneseChange={setShowJapanese}
                 companyCulture={companyCulture}
                 userFirstName={userFirstName}
+                userEmail={user?.primaryEmailAddress?.emailAddress ?? undefined}
                 onPracticeComplete={handlePracticeComplete}
               />
             </motion.div>

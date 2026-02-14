@@ -1,5 +1,7 @@
 import { GoogleGenAI } from "@google/genai";
 import { DELIMITERS } from "@/lib/chatDelimiters";
+import { getIsProByEmail } from "@/lib/auth";
+
 console.log("★API KEY CHECK:", process.env.GEMINI_API_KEY ? "読み込み成功" : "読み込み失敗");
 export const runtime = "edge";
 
@@ -143,6 +145,8 @@ export interface ChatRequestBody {
   userMessage: string;
   history?: { role: "user" | "partner"; text: string }[];
   companyCulture?: string;
+  /** 機能制限のバイパス用。ADMIN_EMAIL と一致する場合は isPro として制限なし */
+  userEmail?: string | null;
 }
 
 export async function POST(request: Request) {
@@ -164,13 +168,16 @@ export async function POST(request: Request) {
     });
   }
 
-  const { scene, userMessage, history = [], companyCulture } = body;
+  const { scene, userMessage, history = [], companyCulture, userEmail } = body;
   if (!userMessage?.trim()) {
     return new Response(JSON.stringify({ error: "userMessage is required" }), {
       status: 400,
       headers: { "Content-Type": "application/json" },
     });
   }
+
+  const isPro = getIsProByEmail(userEmail);
+  // 今後の「1日5回まで」等の制限: if (!isPro && overDailyLimit()) return 429;
 
   const sceneConfig = SCENE_CONFIG[scene];
   const sceneContext = sceneConfig

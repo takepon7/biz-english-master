@@ -58,6 +58,8 @@ interface ConversationScreenProps {
   onShowJapaneseChange?: (value: boolean) => void;
   companyCulture?: CompanyCultureId;
   userFirstName?: string | null;
+  /** Pro 判定用。ADMIN_EMAIL と一致する場合は制限バイパス */
+  userEmail?: string | null;
   onPracticeComplete?: (record: PracticeRecord) => void;
 }
 
@@ -72,6 +74,7 @@ export function ConversationScreen({
   onShowJapaneseChange,
   companyCulture,
   userFirstName,
+  userEmail,
   onPracticeComplete,
 }: ConversationScreenProps) {
   const [messages, setMessages] = useState<ChatMessage[]>(() => [
@@ -156,6 +159,7 @@ export function ConversationScreen({
             userMessage: trimmed,
             history: history.length ? history : undefined,
             companyCulture: companyCulture ?? undefined,
+            userEmail: userEmail ?? undefined,
           }),
         });
 
