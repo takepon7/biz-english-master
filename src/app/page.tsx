@@ -1,322 +1,57 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import {
-  Coffee,
-  Briefcase,
-  Award,
-  Menu,
-  ChevronDown,
-  Volume2,
-  Settings,
-} from "lucide-react";
-import { ConversationScreen, type SceneId, type PracticeRecord } from "@/components/ConversationScreen";
-import {
-  getPracticeHistory,
-  addPracticeItem,
-  type PracticeHistoryItem,
-} from "@/lib/practiceHistory";
-import { getPreferredEnglishVoice } from "@/lib/speechVoice";
-import {
-  TIMELINE_CATEGORIES,
-  getScenarioLabel,
-  getScenarioSublabel,
-} from "@/lib/scenarios";
-import {
-  COMPANY_CULTURE_OPTIONS,
-  getStoredCompanyCulture,
-  setStoredCompanyCulture,
-  type CompanyCultureId,
-} from "@/lib/companyCulture";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@clerk/nextjs";
+import { useEffect } from "react";
 
-const CATEGORY_ICONS: Record<string, React.ReactNode> = {
-  "Day 1 - Week 1": <Coffee className="h-5 w-5" />,
-  "Month 1": <Briefcase className="h-5 w-5" />,
-  "Month 3": <Award className="h-5 w-5" />,
-};
+export default function LandingPage() {
+  const { isSignedIn } = useAuth();
+  const router = useRouter();
 
-function formatHistoryTime(timestamp: number): string {
-  return new Date(timestamp).toLocaleTimeString("ja-JP", {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
+  useEffect(() => {
+    if (isSignedIn) {
+      router.replace("/practice");
+    }
+  }, [isSignedIn, router]);
 
-function HistoryDetailPanel({
-  item,
-  scenarioLabel,
-  onClose,
-}: {
-  item: PracticeHistoryItem;
-  scenarioLabel: string;
-  onClose: () => void;
-}) {
-  const [isSpeaking, setIsSpeaking] = useState(false);
-
-  const speak = useCallback((text: string) => {
-    if (typeof window === "undefined" || !text.trim()) return;
-    const synth = window.speechSynthesis;
-    synth.cancel();
-    const u = new SpeechSynthesisUtterance(text.trim());
-    u.lang = "en-US";
-    u.rate = 0.95;
-    const preferred = getPreferredEnglishVoice();
-    if (preferred) u.voice = preferred;
-    u.onstart = () => setIsSpeaking(true);
-    u.onend = u.onerror = () => setIsSpeaking(false);
-    synth.speak(u);
-  }, []);
-
-  useEffect(() => () => window.speechSynthesis?.cancel(), []);
-
-  const text = item.refactoredText ?? (item as unknown as { refactoredEnglish?: string }).refactoredEnglish;
-  const userText = item.userInput ?? (item as unknown as { userMessage?: string }).userMessage;
-
-  return (
-    <div className="flex h-full flex-col overflow-y-auto px-4 py-4">
-      <button
-        type="button"
-        onClick={onClose}
-        className="mb-4 self-start rounded-lg px-3 py-2 text-sm text-slate-400 hover:bg-slate-800 hover:text-white"
-      >
-        ← 一覧に戻る
-      </button>
-      <div className="space-y-4 text-sm">
-        <p className="text-xs text-slate-500">
-          {scenarioLabel} · {formatHistoryTime(item.timestamp)}
-        </p>
-        <div>
-          <p className="mb-1 text-xs font-medium uppercase tracking-wider text-slate-500">発話内容</p>
-          <p className="rounded-lg bg-slate-800/80 px-3 py-2 text-slate-200">{userText || "—"}</p>
-        </div>
-        <div>
-          <div className="mb-1 flex items-center justify-between gap-2">
-            <p className="text-xs font-medium uppercase tracking-wider text-slate-500">プロの英語（修正案）</p>
-            {text && (
-              <button
-                type="button"
-                onClick={() => speak(text)}
-                aria-label="読み上げる"
-                className={`shrink-0 rounded p-1.5 text-emerald-400 hover:bg-emerald-800/50 ${isSpeaking ? "animate-pulse text-sky-300" : ""}`}
-              >
-                <Volume2 className="h-4 w-4" />
-              </button>
-            )}
-          </div>
-          <p className="rounded-lg border border-emerald-500/30 bg-emerald-950/30 px-3 py-2 text-emerald-100">
-            {text || "—"}
-          </p>
-        </div>
-        <div>
-          <p className="mb-1 text-xs font-medium uppercase tracking-wider text-slate-500">コーチングノート</p>
-          <p className="rounded-lg bg-slate-800/80 px-3 py-2 italic text-slate-300">{item.coachingNote || "—"}</p>
-        </div>
+  if (isSignedIn) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-slate-900 text-slate-400">
+        <p>リダイレクトしています…</p>
       </div>
-    </div>
-  );
-}
-
-export default function Home() {
-  const [selectedScene, setSelectedScene] = useState<SceneId>("coffee-break");
-  const [showJapanese, setShowJapanese] = useState(false);
-  const [companyCulture, setCompanyCulture] = useState<CompanyCultureId>("tech-startup");
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [historyItems, setHistoryItems] = useState<PracticeHistoryItem[]>([]);
-  const [selectedHistoryItem, setSelectedHistoryItem] = useState<PracticeHistoryItem | null>(null);
-
-  useEffect(() => {
-    setHistoryItems(getPracticeHistory());
-  }, []);
-
-  useEffect(() => {
-    setCompanyCulture(getStoredCompanyCulture());
-  }, []);
-
-  const handlePracticeComplete = useCallback((record: PracticeRecord) => {
-    addPracticeItem(record);
-    setHistoryItems(getPracticeHistory());
-  }, []);
+    );
+  }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-slate-900 text-white">
-      {/* モバイル：サイドバー表示時の背面オーバーレイ */}
-      {sidebarOpen && (
-        <button
-          type="button"
-          aria-label="メニューを閉じる"
-          className="fixed inset-0 z-10 bg-black/40 md:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
-      {/* サイドバー：シーン選択（md以上で常時表示、モバイルはオーバーレイ） */}
-      <aside
-        className={`fixed inset-y-0 left-0 z-20 flex h-full w-64 shrink-0 flex-col overflow-hidden border-r border-slate-700/50 bg-slate-900/95 backdrop-blur transition-transform duration-200 md:static md:translate-x-0 md:w-56 md:border-r md:bg-slate-900 ${
-          sidebarOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
-      >
-        <div className="flex shrink-0 items-center justify-between border-b border-slate-700/50 px-4 py-3 md:justify-center">
-          <span className="text-sm font-semibold text-slate-200">
-            Biz English Master
-          </span>
-          <button
-            type="button"
-            onClick={() => setSidebarOpen(false)}
-            className="rounded p-1.5 text-slate-400 hover:bg-slate-800 hover:text-white md:hidden"
-            aria-label="メニューを閉じる"
-          >
-            <ChevronDown className="h-5 w-5 rotate-90" />
-          </button>
-        </div>
-        <nav className="min-h-0 flex-1 overflow-y-auto py-3">
-          <p className="mb-2 px-4 text-xs font-medium uppercase tracking-wider text-slate-500">
-            キャリア・タイムライン
-          </p>
-          <div className="space-y-4 px-2">
-            {TIMELINE_CATEGORIES.map(({ phase, label: categoryLabel, scenarios }) => (
-              <div key={phase}>
-                <div className="mb-1.5 flex items-center gap-2 px-2 py-1">
-                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-slate-700/80 text-slate-400">
-                    {CATEGORY_ICONS[phase] ?? <Briefcase className="h-4 w-4" />}
-                  </span>
-                  <div>
-                    <p className="text-xs font-medium text-slate-400">{phase}</p>
-                    <p className="text-xs text-slate-500">{categoryLabel}</p>
-                  </div>
-                </div>
-                <ul className="space-y-0.5">
-                  {scenarios.map(({ id, label, sublabel }) => (
-                    <li key={id}>
-                      <button
-                        type="button"
-                        data-testid={`scene-${id}`}
-                        onClick={() => {
-                          setSelectedScene(id as SceneId);
-                          setSidebarOpen(false);
-                        }}
-                        className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left transition ${
-                          selectedScene === id
-                            ? "bg-sky-600/20 text-sky-300"
-                            : "text-slate-300 hover:bg-slate-800 hover:text-slate-100"
-                        }`}
-                      >
-                        <div className="min-w-0 flex-1">
-                          <span className="block truncate text-sm font-medium">
-                            {label}
-                          </span>
-                          <span className="block truncate text-xs text-slate-500">
-                            {sublabel}
-                          </span>
-                        </div>
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
-
-          <div className="mt-4 border-t border-slate-700/50 pt-3">
-            <p className="mb-2 flex items-center gap-2 px-4 text-xs font-medium uppercase tracking-wider text-slate-500">
-              <Settings className="h-3.5 w-3.5" />
-              Settings
-            </p>
-            <p className="mb-1.5 px-3 text-xs text-slate-500">Company Culture（企業文化）</p>
-            <select
-              value={companyCulture}
-              onChange={(e) => {
-                const v = e.target.value as CompanyCultureId;
-                setCompanyCulture(v);
-                setStoredCompanyCulture(v);
-              }}
-              className="mx-2 mb-2 w-[calc(100%-1rem)] rounded-lg border border-slate-600 bg-slate-800 px-3 py-2 text-sm text-slate-200 focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
-              data-testid="company-culture-select"
-            >
-              {COMPANY_CULTURE_OPTIONS.map((opt) => (
-                <option key={opt.id} value={opt.id}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="mt-4 border-t border-slate-700/50 pt-3">
-            <p className="mb-2 px-4 text-xs font-medium uppercase tracking-wider text-slate-500">
-              Practice History
-            </p>
-            <ul className="space-y-0.5 px-2">
-              {historyItems.length === 0 ? (
-                <li className="px-3 py-2 text-xs text-slate-500">
-                  まだ履歴はありません
-                </li>
-              ) : (
-                historyItems.map((item) => (
-                    <li key={item.id}>
-                      <button
-                        type="button"
-                        data-testid={`history-${item.id}`}
-                        onClick={() => {
-                          setSelectedHistoryItem(item);
-                          setSidebarOpen(false);
-                        }}
-                        className={`flex w-full flex-col gap-0.5 rounded-lg px-3 py-2 text-left text-slate-300 hover:bg-slate-800 hover:text-slate-100 ${
-                          selectedHistoryItem?.id === item.id ? "bg-slate-800 text-slate-100" : ""
-                        }`}
-                      >
-                        <span className="truncate text-sm font-medium">
-                          {getScenarioLabel(item.scenario)}
-                        </span>
-                        <span className="text-xs text-slate-500">
-                          {formatHistoryTime(item.timestamp)}
-                        </span>
-                      </button>
-                    </li>
-                ))
-              )}
-            </ul>
-          </div>
-        </nav>
-      </aside>
-
-      {/* メイン：会話エリア または 履歴詳細（クリック時はメイン画面に表示） */}
-      <main className="relative flex h-full min-h-0 min-w-0 flex-1 flex-col">
-        <button
-          type="button"
-          onClick={() => setSidebarOpen(true)}
-          className="absolute left-3 top-3 z-10 rounded-lg bg-slate-800/90 p-2 text-slate-400 hover:bg-slate-700 hover:text-white md:hidden"
-          aria-label="シーンを選択"
+    <div className="flex min-h-screen flex-col items-center justify-center bg-slate-900 px-4 text-white">
+      <h1 className="mb-2 text-2xl font-bold tracking-tight md:text-3xl">
+        Biz English Master
+      </h1>
+      <p className="mb-8 text-center text-slate-400">
+        ビジネス英会話の反復練習。AI 相手に実践して、即フィードバック。
+      </p>
+      <div className="flex flex-col gap-3 sm:flex-row">
+        <Link
+          href="/sign-in"
+          className="rounded-lg bg-slate-700 px-6 py-3 text-center text-sm font-medium text-white hover:bg-slate-600 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 focus:ring-offset-slate-900"
         >
-          <Menu className="h-5 w-5" />
-        </button>
-
-        {selectedHistoryItem ? (
-          <HistoryDetailPanel
-            item={selectedHistoryItem}
-            scenarioLabel={`${getScenarioLabel(selectedHistoryItem.scenario)} · ${getScenarioSublabel(selectedHistoryItem.scenario)}`}
-            onClose={() => setSelectedHistoryItem(null)}
-          />
-        ) : (
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={selectedScene}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              className="relative flex h-full min-h-0 min-w-0 flex-1 flex-col"
-            >
-              <ConversationScreen
-                scene={selectedScene}
-                onBack={() => setSidebarOpen(true)}
-                showJapanese={showJapanese}
-                onShowJapaneseChange={setShowJapanese}
-                companyCulture={companyCulture}
-                onPracticeComplete={handlePracticeComplete}
-              />
-            </motion.div>
-          </AnimatePresence>
-        )}
-      </main>
+          Sign In
+        </Link>
+        <Link
+          href="/sign-up"
+          className="rounded-lg bg-sky-600 px-6 py-3 text-center text-sm font-medium text-white hover:bg-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 focus:ring-offset-slate-900"
+        >
+          Sign Up
+        </Link>
+      </div>
+      <p className="mt-8 text-sm text-slate-500">
+        アカウントをお持ちの方は
+        <Link href="/practice" className="ml-1 text-sky-400 hover:underline">
+          練習を始める
+        </Link>
+        （ログインが必要です）
+      </p>
     </div>
   );
 }

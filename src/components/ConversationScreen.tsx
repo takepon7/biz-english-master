@@ -57,6 +57,7 @@ interface ConversationScreenProps {
   showJapanese: boolean;
   onShowJapaneseChange?: (value: boolean) => void;
   companyCulture?: CompanyCultureId;
+  userFirstName?: string | null;
   onPracticeComplete?: (record: PracticeRecord) => void;
 }
 
@@ -70,6 +71,7 @@ export function ConversationScreen({
   showJapanese,
   onShowJapaneseChange,
   companyCulture,
+  userFirstName,
   onPracticeComplete,
 }: ConversationScreenProps) {
   const [messages, setMessages] = useState<ChatMessage[]>(() => [
@@ -302,6 +304,11 @@ export function ConversationScreen({
       </header>
 
       <section className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden bg-gray-50 px-3 py-2">
+        {userFirstName && (
+          <p className="mb-2 text-sm text-gray-600" data-testid="welcome-message">
+            Welcome, {userFirstName}!
+          </p>
+        )}
         <div className="space-y-2">
           {messages.map((msg) =>
             msg.role === "user" ? (
