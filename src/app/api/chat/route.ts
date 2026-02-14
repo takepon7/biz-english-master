@@ -125,8 +125,8 @@ Output only ${DELIMITERS.REFACTORED}, then ${DELIMITERS.NOTE}, then ${DELIMITERS
     const systemPrompt = buildSystemPrompt(scene);
     const stream = await ai.models.generateContentStream({
       model: MODEL,
-      systemInstruction: systemPrompt,
       contents: userPrompt,
+      config: { systemInstruction: systemPrompt },
     });
 
     const encoder = new TextEncoder();
