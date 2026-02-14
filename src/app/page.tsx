@@ -3,15 +3,13 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Briefcase,
-  Users,
-  Sun,
   Coffee,
-  BarChart3,
-  LogOut,
+  Briefcase,
+  Award,
   Menu,
   ChevronDown,
   Volume2,
+  Settings,
 } from "lucide-react";
 import { ConversationScreen, type SceneId, type PracticeRecord } from "@/components/ConversationScreen";
 import {
@@ -20,50 +18,23 @@ import {
   type PracticeHistoryItem,
 } from "@/lib/practiceHistory";
 import { getPreferredEnglishVoice } from "@/lib/speechVoice";
+import {
+  TIMELINE_CATEGORIES,
+  getScenarioLabel,
+  getScenarioSublabel,
+} from "@/lib/scenarios";
+import {
+  COMPANY_CULTURE_OPTIONS,
+  getStoredCompanyCulture,
+  setStoredCompanyCulture,
+  type CompanyCultureId,
+} from "@/lib/companyCulture";
 
-const SCENES: {
-  id: SceneId;
-  label: string;
-  sublabel: string;
-  icon: React.ReactNode;
-}[] = [
-  {
-    id: "job-interview",
-    label: "Job Interview",
-    sublabel: "採用面接",
-    icon: <Briefcase className="h-5 w-5" />,
-  },
-  {
-    id: "first-team-intro",
-    label: "First Team Intro",
-    sublabel: "入社時の自己紹介",
-    icon: <Users className="h-5 w-5" />,
-  },
-  {
-    id: "morning-sync",
-    label: "Morning Sync",
-    sublabel: "朝のミーティング",
-    icon: <Sun className="h-5 w-5" />,
-  },
-  {
-    id: "lunch-small-talk",
-    label: "Lunch Small Talk",
-    sublabel: "同僚とのランチ",
-    icon: <Coffee className="h-5 w-5" />,
-  },
-  {
-    id: "exec-report",
-    label: "Exec Report",
-    sublabel: "役員への進捗報告",
-    icon: <BarChart3 className="h-5 w-5" />,
-  },
-  {
-    id: "signing-off",
-    label: "Signing Off",
-    sublabel: "退社時の挨拶",
-    icon: <LogOut className="h-5 w-5" />,
-  },
-];
+const CATEGORY_ICONS: Record<string, React.ReactNode> = {
+  "Day 1 - Week 1": <Coffee className="h-5 w-5" />,
+  "Month 1": <Briefcase className="h-5 w-5" />,
+  "Month 3": <Award className="h-5 w-5" />,
+};
 
 function formatHistoryTime(timestamp: number): string {
   return new Date(timestamp).toLocaleTimeString("ja-JP", {
@@ -147,15 +118,19 @@ function HistoryDetailPanel({
 }
 
 export default function Home() {
-  const [selectedScene, setSelectedScene] = useState<SceneId>("job-interview");
+  const [selectedScene, setSelectedScene] = useState<SceneId>("coffee-break");
   const [showJapanese, setShowJapanese] = useState(false);
+  const [companyCulture, setCompanyCulture] = useState<CompanyCultureId>("tech-startup");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [historyItems, setHistoryItems] = useState<PracticeHistoryItem[]>([]);
   const [selectedHistoryItem, setSelectedHistoryItem] = useState<PracticeHistoryItem | null>(null);
 
-  // localStorage はクライアントのみのため、useEffect で読み込みハイドレーションエラーを防ぐ
   useEffect(() => {
     setHistoryItems(getPracticeHistory());
+  }, []);
+
+  useEffect(() => {
+    setCompanyCulture(getStoredCompanyCulture());
   }, []);
 
   const handlePracticeComplete = useCallback((record: PracticeRecord) => {
@@ -164,7 +139,7 @@ export default function Home() {
   }, []);
 
   return (
-    <div className="flex min-h-screen bg-slate-900 text-white">
+    <div className="flex h-screen overflow-hidden bg-slate-900 text-white">
       {/* モバイル：サイドバー表示時の背面オーバーレイ */}
       {sidebarOpen && (
         <button
@@ -176,7 +151,7 @@ export default function Home() {
       )}
       {/* サイドバー：シーン選択（md以上で常時表示、モバイルはオーバーレイ） */}
       <aside
-        className={`fixed inset-y-0 left-0 z-20 flex w-64 shrink-0 flex-col border-r border-slate-700/50 bg-slate-900/95 backdrop-blur transition-transform duration-200 md:static md:translate-x-0 md:w-56 md:border-r md:bg-slate-900 ${
+        className={`fixed inset-y-0 left-0 z-20 flex h-full w-64 shrink-0 flex-col overflow-hidden border-r border-slate-700/50 bg-slate-900/95 backdrop-blur transition-transform duration-200 md:static md:translate-x-0 md:w-56 md:border-r md:bg-slate-900 ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
@@ -195,39 +170,75 @@ export default function Home() {
         </div>
         <nav className="min-h-0 flex-1 overflow-y-auto py-3">
           <p className="mb-2 px-4 text-xs font-medium uppercase tracking-wider text-slate-500">
-            シーン
+            キャリア・タイムライン
           </p>
-          <ul className="space-y-0.5 px-2">
-            {SCENES.map(({ id, label, sublabel, icon }) => (
-              <li key={id}>
-                <button
-                  type="button"
-                  data-testid={`scene-${id}`}
-                  onClick={() => {
-                    setSelectedScene(id);
-                    setSidebarOpen(false);
-                  }}
-                  className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left transition ${
-                    selectedScene === id
-                      ? "bg-sky-600/20 text-sky-300"
-                      : "text-slate-300 hover:bg-slate-800 hover:text-slate-100"
-                  }`}
-                >
-                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-700/80 text-slate-300">
-                    {icon}
+          <div className="space-y-4 px-2">
+            {TIMELINE_CATEGORIES.map(({ phase, label: categoryLabel, scenarios }) => (
+              <div key={phase}>
+                <div className="mb-1.5 flex items-center gap-2 px-2 py-1">
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-slate-700/80 text-slate-400">
+                    {CATEGORY_ICONS[phase] ?? <Briefcase className="h-4 w-4" />}
                   </span>
-                  <div className="min-w-0 flex-1">
-                    <span className="block truncate text-sm font-medium">
-                      {label}
-                    </span>
-                    <span className="block truncate text-xs text-slate-500">
-                      {sublabel}
-                    </span>
+                  <div>
+                    <p className="text-xs font-medium text-slate-400">{phase}</p>
+                    <p className="text-xs text-slate-500">{categoryLabel}</p>
                   </div>
-                </button>
-              </li>
+                </div>
+                <ul className="space-y-0.5">
+                  {scenarios.map(({ id, label, sublabel }) => (
+                    <li key={id}>
+                      <button
+                        type="button"
+                        data-testid={`scene-${id}`}
+                        onClick={() => {
+                          setSelectedScene(id as SceneId);
+                          setSidebarOpen(false);
+                        }}
+                        className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left transition ${
+                          selectedScene === id
+                            ? "bg-sky-600/20 text-sky-300"
+                            : "text-slate-300 hover:bg-slate-800 hover:text-slate-100"
+                        }`}
+                      >
+                        <div className="min-w-0 flex-1">
+                          <span className="block truncate text-sm font-medium">
+                            {label}
+                          </span>
+                          <span className="block truncate text-xs text-slate-500">
+                            {sublabel}
+                          </span>
+                        </div>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             ))}
-          </ul>
+          </div>
+
+          <div className="mt-4 border-t border-slate-700/50 pt-3">
+            <p className="mb-2 flex items-center gap-2 px-4 text-xs font-medium uppercase tracking-wider text-slate-500">
+              <Settings className="h-3.5 w-3.5" />
+              Settings
+            </p>
+            <p className="mb-1.5 px-3 text-xs text-slate-500">Company Culture（企業文化）</p>
+            <select
+              value={companyCulture}
+              onChange={(e) => {
+                const v = e.target.value as CompanyCultureId;
+                setCompanyCulture(v);
+                setStoredCompanyCulture(v);
+              }}
+              className="mx-2 mb-2 w-[calc(100%-1rem)] rounded-lg border border-slate-600 bg-slate-800 px-3 py-2 text-sm text-slate-200 focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
+              data-testid="company-culture-select"
+            >
+              {COMPANY_CULTURE_OPTIONS.map((opt) => (
+                <option key={opt.id} value={opt.id}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+          </div>
 
           <div className="mt-4 border-t border-slate-700/50 pt-3">
             <p className="mb-2 px-4 text-xs font-medium uppercase tracking-wider text-slate-500">
@@ -239,10 +250,7 @@ export default function Home() {
                   まだ履歴はありません
                 </li>
               ) : (
-                historyItems.map((item) => {
-                  const sceneInfo = SCENES.find((s) => s.id === item.scenario);
-                  const scenarioLabel = sceneInfo?.sublabel ?? sceneInfo?.label ?? item.scenario;
-                  return (
+                historyItems.map((item) => (
                     <li key={item.id}>
                       <button
                         type="button"
@@ -256,15 +264,14 @@ export default function Home() {
                         }`}
                       >
                         <span className="truncate text-sm font-medium">
-                          {scenarioLabel}
+                          {getScenarioLabel(item.scenario)}
                         </span>
                         <span className="text-xs text-slate-500">
                           {formatHistoryTime(item.timestamp)}
                         </span>
                       </button>
                     </li>
-                  );
-                })
+                ))
               )}
             </ul>
           </div>
@@ -272,7 +279,7 @@ export default function Home() {
       </aside>
 
       {/* メイン：会話エリア または 履歴詳細（クリック時はメイン画面に表示） */}
-      <main className="relative min-h-0 min-w-0 flex-1 flex flex-col">
+      <main className="relative flex h-full min-h-0 min-w-0 flex-1 flex-col">
         <button
           type="button"
           onClick={() => setSidebarOpen(true)}
@@ -285,11 +292,7 @@ export default function Home() {
         {selectedHistoryItem ? (
           <HistoryDetailPanel
             item={selectedHistoryItem}
-            scenarioLabel={
-              SCENES.find((s) => s.id === selectedHistoryItem.scenario)?.sublabel ??
-              SCENES.find((s) => s.id === selectedHistoryItem.scenario)?.label ??
-              selectedHistoryItem.scenario
-            }
+            scenarioLabel={`${getScenarioLabel(selectedHistoryItem.scenario)} · ${getScenarioSublabel(selectedHistoryItem.scenario)}`}
             onClose={() => setSelectedHistoryItem(null)}
           />
         ) : (
@@ -300,13 +303,14 @@ export default function Home() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.2 }}
-              className="relative min-h-full min-w-full flex-1"
+              className="relative flex h-full min-h-0 min-w-0 flex-1 flex-col"
             >
               <ConversationScreen
                 scene={selectedScene}
                 onBack={() => setSidebarOpen(true)}
                 showJapanese={showJapanese}
                 onShowJapaneseChange={setShowJapanese}
+                companyCulture={companyCulture}
                 onPracticeComplete={handlePracticeComplete}
               />
             </motion.div>

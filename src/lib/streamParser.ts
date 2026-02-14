@@ -1,38 +1,36 @@
 import { DELIMITERS } from "@/lib/chatDelimiters";
 
-export type StreamSection = "refactored" | "note" | "next";
+export type StreamSection = "next" | "translation" | "refactored" | "analysis";
 
 export interface StreamParseState {
-  refactored: string;
-  note: string;
   next: string;
-  refactoredJp: string;
   nextJp: string;
+  refactored: string;
+  refactoredJp: string;
+  analysis: string;
 }
 
 const EMPTY_STATE: StreamParseState = {
-  refactored: "",
-  note: "",
   next: "",
-  refactoredJp: "",
   nextJp: "",
+  refactored: "",
+  refactoredJp: "",
+  analysis: "",
 };
 
-/** 3タグ形式: [REFACTORED] → [NOTE] → [NEXT]（以降は next で終端まで） */
-const END_DELIMITERS = [DELIMITERS.NOTE, DELIMITERS.NEXT] as const;
+/** 4タグ形式: [NEXT] → [TRANSLATION] → [REFACTORED] → [ANALYSIS]（体感速度優先で返事を先に出力） */
+const END_DELIMITERS = [DELIMITERS.TRANSLATION, DELIMITERS.REFACTORED, DELIMITERS.ANALYSIS] as const;
 
 const SECTION_KEYS: (keyof StreamParseState)[] = [
-  "refactored",
-  "note",
   "next",
-  "refactoredJp",
   "nextJp",
+  "refactored",
+  "analysis",
 ];
 
 /**
- * ストリーム文字列から [REFACTORED] / [NOTE] / [NEXT] を検知し、適切な変数に振り分ける。
- * 単純な文字列検索（indexOf）でタグを区切り、onSection で都度 state を渡す。
- * 形式: [REFACTORED]... [NOTE]... [NEXT]...（終端までが next）
+ * ストリーム文字列から [NEXT] / [TRANSLATION] / [REFACTORED] / [ANALYSIS] を検知し、適切な変数に振り分ける。
+ * 形式: [NEXT]... [TRANSLATION]... [REFACTORED]... [ANALYSIS]...（終端までが analysis）
  */
 export function createStreamParser(
   onSection: (state: StreamParseState) => void
@@ -42,8 +40,8 @@ export function createStreamParser(
   const state: StreamParseState = { ...EMPTY_STATE };
 
   function flushToCurrent(text: string) {
-    if (sectionIndex < 0 || sectionIndex > 2) return;
-    const key = SECTION_KEYS[sectionIndex] as "refactored" | "note" | "next";
+    if (sectionIndex < 0 || sectionIndex > 3) return;
+    const key = SECTION_KEYS[sectionIndex] as keyof StreamParseState;
     const trimmed = text.trim();
     if (!trimmed) return;
     state[key] += (state[key] ? " " : "") + trimmed;
@@ -54,12 +52,12 @@ export function createStreamParser(
     buffer += chunk;
 
     if (sectionIndex < 0) {
-      const start = buffer.indexOf(DELIMITERS.REFACTORED);
+      const start = buffer.indexOf(DELIMITERS.NEXT);
       if (start === -1) {
         if (buffer.length > 80) buffer = buffer.slice(-80);
         return;
       }
-      buffer = buffer.slice(start + DELIMITERS.REFACTORED.length);
+      buffer = buffer.slice(start + DELIMITERS.NEXT.length);
       sectionIndex = 0;
     }
 
@@ -76,7 +74,7 @@ export function createStreamParser(
       sectionIndex++;
     }
 
-    if (sectionIndex === 2) {
+    if (sectionIndex === 3) {
       flushToCurrent(buffer);
       buffer = "";
     }

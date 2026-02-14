@@ -21,7 +21,6 @@ export function useSpeechRecognition(options: UseSpeechRecognitionOptions = {}) 
   const {
     lang = "en-US",
     interimResults = true,
-    continuous = false,
     onResult,
     onError,
   } = options;
@@ -31,6 +30,15 @@ export function useSpeechRecognition(options: UseSpeechRecognitionOptions = {}) 
   const [transcript, setTranscript] = useState("");
   const [interimTranscript, setInterimTranscript] = useState("");
   const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const transcriptRef = useRef("");
+  const silenceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const clearSilenceTimer = useCallback(() => {
+    if (silenceTimerRef.current !== null) {
+      clearTimeout(silenceTimerRef.current);
+      silenceTimerRef.current = null;
+    }
+  }, []);
 
   useEffect(() => {
     const api = window.SpeechRecognition ?? (window as unknown as { webkitSpeechRecognition?: typeof SpeechRecognition }).webkitSpeechRecognition;
@@ -45,15 +53,20 @@ export function useSpeechRecognition(options: UseSpeechRecognitionOptions = {}) 
       onError?.("Speech recognition is not supported in this browser.");
       return;
     }
+    clearSilenceTimer();
     const recognition = new api() as SpeechRecognition;
     recognition.lang = lang;
-    recognition.continuous = continuous;
+    recognition.continuous = true;
     recognition.interimResults = interimResults;
     recognition.maxAlternatives = 1;
 
     recognition.onstart = () => setStatus("listening");
-    recognition.onend = () => setStatus("idle");
+    recognition.onend = () => {
+      clearSilenceTimer();
+      setStatus("idle");
+    };
     recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
+      clearSilenceTimer();
       setStatus("error");
       const msg = event.error === "not-allowed"
         ? "マイクの使用が許可されていません"
@@ -61,6 +74,16 @@ export function useSpeechRecognition(options: UseSpeechRecognitionOptions = {}) 
       onError?.(msg);
     };
     recognition.onresult = (event: SpeechRecognitionEvent) => {
+      clearSilenceTimer();
+      silenceTimerRef.current = setTimeout(() => {
+        silenceTimerRef.current = null;
+        if (recognitionRef.current) {
+          recognitionRef.current.stop();
+          recognitionRef.current = null;
+        }
+        setStatus("idle");
+      }, 3000);
+
       let finalText = "";
       let interimText = "";
       for (let i = event.resultIndex; i < event.results.length; i++) {
@@ -68,46 +91,52 @@ export function useSpeechRecognition(options: UseSpeechRecognitionOptions = {}) 
         const text = result[0]?.transcript ?? "";
         if (result.isFinal) {
           finalText += text;
-          onResult?.(text.trim(), true);
         } else {
           interimText += text;
         }
       }
       if (finalText) {
-        setTranscript((prev) => (prev ? `${prev} ${finalText}` : finalText).trim());
+        const newFull = (transcriptRef.current ? `${transcriptRef.current} ${finalText}` : finalText).trim();
+        transcriptRef.current = newFull;
+        setTranscript(newFull);
         setInterimTranscript("");
+        onResult?.(newFull, true);
       } else if (interimText) {
         setInterimTranscript(interimText);
       }
     };
 
     recognitionRef.current = recognition;
+    transcriptRef.current = "";
     setTranscript("");
     setInterimTranscript("");
     recognition.start();
-  }, [lang, continuous, interimResults, onResult, onError]);
+  }, [lang, interimResults, onResult, onError, clearSilenceTimer]);
 
   const stop = useCallback(() => {
+    clearSilenceTimer();
     if (recognitionRef.current) {
       recognitionRef.current.stop();
       recognitionRef.current = null;
     }
     setStatus("idle");
-  }, []);
+  }, [clearSilenceTimer]);
 
   const resetTranscript = useCallback(() => {
+    transcriptRef.current = "";
     setTranscript("");
     setInterimTranscript("");
   }, []);
 
   useEffect(() => {
     return () => {
+      clearSilenceTimer();
       if (recognitionRef.current) {
         recognitionRef.current.abort();
         recognitionRef.current = null;
       }
     };
-  }, []);
+  }, [clearSilenceTimer]);
 
   return {
     start,
