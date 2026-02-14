@@ -1,3 +1,5 @@
+import type { Route } from "@playwright/test";
+
 const DELIMITERS = {
   REFACTORED: "[REFACTORED]",
   NOTE: "[NOTE]",
@@ -37,11 +39,11 @@ export function mockChatStreamBody(overrides: Partial<typeof MOCK_CHAT_RESPONSE>
  * /api/chat をモック（ストリーム形式で返す）
  */
 export async function mockChatApi(
-  page: { route: (url: string | RegExp, handler: (route: unknown) => Promise<void>) => Promise<void> },
+  page: { route: (url: string | RegExp, handler: (route: Route) => Promise<void>) => Promise<void> },
   overrides: Partial<typeof MOCK_CHAT_RESPONSE> = {}
 ) {
   const body = mockChatStreamBody(overrides);
-  await page.route("**/api/chat", async (route) => {
+  await page.route("**/api/chat", async (route: Route) => {
     const request = route.request();
     if (request.method() !== "POST") return route.continue();
     await route.fulfill({
