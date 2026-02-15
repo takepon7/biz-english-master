@@ -3,8 +3,8 @@
   "short_name": "BizEnglish",
   "description": "ビジネス英会話の反復練習。AI相手に実践して、即フィードバック。",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#ffffff",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
   "start_url": "/",
   "orientation": "portrait",
   "icons": [

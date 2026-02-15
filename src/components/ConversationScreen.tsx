@@ -9,8 +9,10 @@ import {
   Send,
   ChevronDown,
   RotateCcw,
+  Sparkles,
+  Info,
 } from "lucide-react";
-import { getPreferredEnglishVoice } from "@/lib/speechVoice";
+import { getPreferredEnglishVoice, speakWithWarmup } from "@/lib/speechVoice";
 import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
 import { createStreamParser } from "@/lib/streamParser";
 import { ResponseSkeleton } from "@/components/ResponseSkeleton";
@@ -58,9 +60,9 @@ interface ConversationScreenProps {
   onShowJapaneseChange?: (value: boolean) => void;
   companyCulture?: CompanyCultureId;
   userFirstName?: string | null;
-  /** Pro 判定用。ADMIN_EMAIL と一致する場合は制限バイパス */
-  userEmail?: string | null;
   onPracticeComplete?: (record: PracticeRecord) => void;
+  /** 回数制限で 429 のときにアップグレード案内を押したときのコールバック（例: サイドバーを開く） */
+  onUpgradeClick?: () => void;
 }
 
 function createId(): string {
@@ -74,8 +76,8 @@ export function ConversationScreen({
   onShowJapaneseChange,
   companyCulture,
   userFirstName,
-  userEmail,
   onPracticeComplete,
+  onUpgradeClick,
 }: ConversationScreenProps) {
   const [messages, setMessages] = useState<ChatMessage[]>(() => [
     {
@@ -93,9 +95,19 @@ export function ConversationScreen({
   const [streamingPayload, setStreamingPayload] = useState<Partial<AssistantMessagePayload> | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [dailyLimitReached, setDailyLimitReached] = useState(false);
+  const [quotaExceededCountdown, setQuotaExceededCountdown] = useState(0);
   const [hintMode, setHintMode] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
   const didAutoTTSRef = useRef(false);
+
+  useEffect(() => {
+    if (quotaExceededCountdown <= 0) return;
+    const t = setInterval(() => {
+      setQuotaExceededCountdown((c) => (c <= 1 ? 0 : c - 1));
+    }, 1000);
+    return () => clearInterval(t);
+  }, [quotaExceededCountdown]);
 
   const handleRetryWithHint = useCallback((refactoredText: string) => {
     setMessages((prev) => {
@@ -113,7 +125,6 @@ export function ConversationScreen({
   const speak = useCallback((text: string) => {
     if (typeof window === "undefined" || !text.trim()) return;
     const synth = window.speechSynthesis;
-    synth.cancel();
     const u = new SpeechSynthesisUtterance(text.trim());
     u.lang = "en-US";
     u.rate = 0.95;
@@ -125,7 +136,7 @@ export function ConversationScreen({
       setIsSpeaking(false);
       speechUtteranceRef.current = null;
     };
-    synth.speak(u);
+    speakWithWarmup(synth, u);
   }, []);
 
   const sendMessage = useCallback(
@@ -133,6 +144,8 @@ export function ConversationScreen({
       const trimmed = text.trim();
       if (!trimmed) return;
       setError(null);
+      setDailyLimitReached(false);
+      setQuotaExceededCountdown(0);
       setInputDraft("");
       setHintMode(false);
       setStreamingPayload(null);
@@ -159,13 +172,21 @@ export function ConversationScreen({
             userMessage: trimmed,
             history: history.length ? history : undefined,
             companyCulture: companyCulture ?? undefined,
-            userEmail: userEmail ?? undefined,
           }),
         });
 
         if (!res.ok) {
           const data = await res.json().catch(() => ({}));
+          if (data.errorType === "QUOTA_EXCEEDED") {
+            const sec = typeof data.retryAfter === "number" ? Math.max(1, data.retryAfter) : 10;
+            setQuotaExceededCountdown(sec);
+            setError(null);
+            setDailyLimitReached(false);
+            return;
+          }
           setError(data.detail ?? data.error ?? "Request failed");
+          setDailyLimitReached(res.status === 429);
+          setQuotaExceededCountdown(0);
           return;
         }
 
@@ -219,6 +240,7 @@ export function ConversationScreen({
         }
       } catch (e) {
         setError(e instanceof Error ? e.message : "Request failed");
+        setDailyLimitReached(false);
       } finally {
         setLoading(false);
       }
@@ -257,7 +279,10 @@ export function ConversationScreen({
   const isListening = status === "listening";
   const inputValue = isListening ? (transcript + (interimTranscript ? ` ${interimTranscript}` : "")).trim() : inputDraft;
   const inputDisplay = inputValue || (isListening ? "Listening…" : "話すか、英文を入力して送信");
-  const canSend = !loading && (isListening ? transcript.trim() : inputDraft.trim());
+  const canSend =
+    !loading &&
+    quotaExceededCountdown <= 0 &&
+    (isListening ? transcript.trim() : inputDraft.trim());
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -269,8 +294,8 @@ export function ConversationScreen({
   }, [sendMessage]);
 
   return (
-    <div className="flex h-full min-h-0 flex-col overflow-hidden bg-gray-50 text-gray-900">
-      <header className="flex shrink-0 items-center justify-between gap-2 border-b border-gray-200 bg-white px-4 py-2.5 shadow-sm">
+    <div className="flex h-full min-h-0 flex-col overflow-hidden bg-gray-50 text-gray-900 min-h-[100dvh] sm:min-h-0">
+      <header className="flex shrink-0 items-center justify-between gap-2 border-b border-gray-200 bg-white px-4 py-2.5 shadow-sm pt-[env(safe-area-inset-top)]">
         {onBack ? (
           <button
             type="button"
@@ -307,13 +332,13 @@ export function ConversationScreen({
         </div>
       </header>
 
-      <section className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden bg-gray-50 px-3 py-2">
+      <section className="min-h-0 flex-1 flex-grow overflow-y-auto overflow-x-hidden bg-gray-50 px-3 py-2 overscroll-contain">
         {userFirstName && (
           <p className="mb-2 text-sm text-gray-600" data-testid="welcome-message">
             Welcome, {userFirstName}!
           </p>
         )}
-        <div className="space-y-2">
+        <div className="min-h-0 space-y-2">
           {messages.map((msg) =>
             msg.role === "user" ? (
               <div key={msg.id} className="flex justify-end">
@@ -427,13 +452,45 @@ export function ConversationScreen({
         <div ref={chatEndRef} aria-hidden />
       </section>
 
-      {error && (
-        <p className="shrink-0 mx-3 mb-2 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
-          {error}
-        </p>
+      {quotaExceededCountdown > 0 && (
+        <div className="shrink-0 mx-3 mb-2 flex flex-col gap-2 rounded-lg border border-amber-200 bg-amber-50/90 px-3 py-2.5 text-sm text-amber-900">
+          <p className="flex items-center gap-2 font-medium">
+            <Info className="h-4 w-4 shrink-0 text-amber-600" />
+            本日の利用制限に達しました。あと {quotaExceededCountdown} 秒後に再試行できます。
+          </p>
+          <p className="text-amber-800">
+            Proプランなら、制限なしでさらに英語を上達させることができます！
+          </p>
+          {onUpgradeClick && (
+            <button
+              type="button"
+              onClick={onUpgradeClick}
+              className="self-start inline-flex items-center gap-1.5 rounded-lg bg-amber-500/25 px-3 py-1.5 text-sm font-medium text-amber-800 hover:bg-amber-500/35 transition"
+            >
+              <Sparkles className="h-4 w-4" />
+              Pro プランへアップグレード
+            </button>
+          )}
+        </div>
       )}
 
-      <div className="shrink-0 w-full border-t border-gray-200 bg-white px-3 pt-3">
+      {error && (
+        <div className="shrink-0 mx-3 mb-2 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
+          <p>{error}</p>
+          {dailyLimitReached && onUpgradeClick && (
+            <button
+              type="button"
+              onClick={onUpgradeClick}
+              className="mt-2 inline-flex items-center gap-1.5 rounded-lg bg-amber-500/20 px-3 py-1.5 text-sm font-medium text-amber-800 hover:bg-amber-500/30"
+            >
+              <Sparkles className="h-4 w-4" />
+              Pro プランへアップグレード
+            </button>
+          )}
+        </div>
+      )}
+
+      <div className="shrink-0 w-full border-t border-gray-200 bg-white px-3 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] pl-[max(0.75rem,env(safe-area-inset-left))] pr-[max(0.75rem,env(safe-area-inset-right))]">
         <div className="flex w-full items-end gap-2 rounded-xl border border-gray-200 bg-gray-50 p-2">
           <div className="flex min-h-[2.5rem] flex-1 flex-col justify-center">
             {isListening ? (
@@ -462,7 +519,7 @@ export function ConversationScreen({
                 className={`min-h-[2.25rem] w-full resize-none bg-transparent py-2 text-sm leading-relaxed placeholder:text-gray-500 focus:outline-none ${
                   hintMode ? "text-gray-500 italic" : "text-gray-900"
                 }`}
-                disabled={loading}
+                disabled={loading || quotaExceededCountdown > 0}
               />
             )}
           </div>
@@ -470,7 +527,7 @@ export function ConversationScreen({
             <button
               type="button"
               onClick={() => (isListening ? stop() : start())}
-              disabled={!isSupported || loading}
+              disabled={!isSupported || loading || quotaExceededCountdown > 0}
               className={`flex h-10 w-10 items-center justify-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 ${
                 isSupported && !loading
                   ? isListening

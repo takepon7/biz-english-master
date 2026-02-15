@@ -1,10 +1,19 @@
+import { currentUser, clerkClient } from "@clerk/nextjs/server";
 import { GoogleGenAI } from "@google/genai";
 import { DELIMITERS } from "@/lib/chatDelimiters";
-import { getIsProByEmail } from "@/lib/auth";
+import { getIsProForUser } from "@/lib/auth";
+import {
+  DAILY_CHAT_LIMIT,
+  getTodayString,
+  getCurrentCount,
+  isLimitReached,
+  getNextMeta,
+  type DailyLimitMeta,
+} from "@/lib/dailyLimit";
 
 console.log("★API KEY CHECK:", process.env.GEMINI_API_KEY ? "読み込み成功" : "読み込み失敗");
-export const runtime = "edge";
 
+// オプション: 同一 IP からの過剰アクセス制限は Next.js Middleware + Upstash Redis 等で検討可能
 const MODEL = "gemini-2.5-flash";
 
 /** シーン別コンテキスト（相手の役職・性格を含む） */
@@ -140,15 +149,20 @@ ${CULTURE_PROMPT[companyCulture]}`;
   return prompt;
 }
 
+/** 制限・isPro はすべてサーバー側（Clerk currentUser + metadata）で判定。body に依存しない */
 export interface ChatRequestBody {
   scene: string;
   userMessage: string;
   history?: { role: "user" | "partner"; text: string }[];
   companyCulture?: string;
-  /** 機能制限のバイパス用。ADMIN_EMAIL と一致する場合は isPro として制限なし */
-  userEmail?: string | null;
 }
 
+/**
+ * セキュリティ・コスト方針:
+ * - 認証・isPro・送信回数はすべてサーバー側（Clerk currentUser + privateMetadata）のみで判定。body やフロントの自己申告に一切依存しない。
+ * - 無料ユーザーは privateMetadata の「今日の送信回数」が 5 回超なら Gemini を呼ばずに 429 を返す。
+ * - isPro（ADMIN_EMAIL または Stripe active）はこの制限をスキップする。
+ */
 export async function POST(request: Request) {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
@@ -168,7 +182,7 @@ export async function POST(request: Request) {
     });
   }
 
-  const { scene, userMessage, history = [], companyCulture, userEmail } = body;
+  const { scene, userMessage, history = [], companyCulture } = body;
   if (!userMessage?.trim()) {
     return new Response(JSON.stringify({ error: "userMessage is required" }), {
       status: 400,
@@ -176,8 +190,41 @@ export async function POST(request: Request) {
     });
   }
 
-  const isPro = getIsProByEmail(userEmail);
-  // 今後の「1日5回まで」等の制限: if (!isPro && overDailyLimit()) return 429;
+  // 鉄壁ガード: 認証と isPro/無料枠の確認を最優先。Gemini はここを通るまで呼ばない
+  const user = await currentUser();
+  if (!user?.id) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+
+  const isPro = getIsProForUser(user);
+
+  // 無料ユーザー: Private Metadata の「今日の送信回数」で 5 回超なら即 429（Gemini を 1 回も呼ばない）
+  if (!isPro) {
+    const client = await clerkClient();
+    const fullUser = await client.users.getUser(user.id);
+    const meta = (fullUser.privateMetadata ?? {}) as DailyLimitMeta;
+    const today = getTodayString();
+    const count = getCurrentCount(meta, today);
+
+    if (isLimitReached(count, DAILY_CHAT_LIMIT)) {
+      return new Response(
+        JSON.stringify({
+          code: "DAILY_LIMIT_REACHED",
+          error: "本日の利用回数の上限に達しました",
+          detail: `1日${DAILY_CHAT_LIMIT}回までです。Pro プランで無制限にご利用いただけます。`,
+        }),
+        { status: 429, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    const nextMeta = getNextMeta(meta, today);
+    await client.users.updateUserMetadata(user.id, {
+      privateMetadata: { ...(fullUser.privateMetadata as Record<string, unknown>), ...nextMeta },
+    });
+  }
 
   const sceneConfig = SCENE_CONFIG[scene];
   const sceneContext = sceneConfig
@@ -230,6 +277,17 @@ Output only ${DELIMITERS.NEXT}, then ${DELIMITERS.TRANSLATION}, then ${DELIMITER
     });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
+    const statusCode = (err as { status?: number })?.status;
+
+    if (statusCode === 429 || /429|quota|resource exhausted/i.test(message)) {
+      const retryMatch = message.match(/retry in (\d+(?:\.\d+)?)\s*s/i) ?? message.match(/(\d+(?:\.\d+)?)\s*sec/i);
+      const retryAfter = retryMatch ? Math.ceil(Number(retryMatch[1])) : 10;
+      return new Response(
+        JSON.stringify({ errorType: "QUOTA_EXCEEDED", retryAfter }),
+        { status: 429, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
     return new Response(
       JSON.stringify({ error: "Chat request failed", detail: message }),
       { status: 502, headers: { "Content-Type": "application/json" } }

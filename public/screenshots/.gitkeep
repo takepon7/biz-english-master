@@ -1,0 +1,2 @@
+# プロダクトキャプチャ画像をここに配置（例: practice.png, landing.png）
+# 配置後、src/app/page.tsx の PRODUCT_SCREENSHOTS に追加するとトップで表示され、クリックでライトボックス表示されます。

@@ -2,8 +2,63 @@
  * ブラウザで利用可能な英語音声のうち、
  * 自然な発音のものを優先して選択する。
  * （Google US English / Samantha 等を優先）
+ *
+ * 初回再生時のピッチずれ対策として、AudioContext の resume と
+ * 無音ダミー発話による SpeechSynthesis のウォームアップを行う。
  */
 const EN_US = "en-US";
+
+let speechWarmedUp = false;
+
+/**
+ * AudioContext が suspended の場合は resume する。
+ * ユーザージェスチャー内で呼ぶこと（speak 実行時など）。
+ */
+export function ensureAudioContextResumed(): Promise<void> {
+  if (typeof window === "undefined") return Promise.resolve();
+  const AC = window.AudioContext || (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+  if (!AC) return Promise.resolve();
+  const ctx = new AC();
+  if (ctx.state === "suspended") {
+    return ctx.resume().then(() => ctx.close());
+  }
+  return ctx.close();
+}
+
+/**
+ * 初回のみダミー発話でウォームアップしてから、本番の Utterance を再生する。
+ * 1 回目の再生時のピッチずれ・掠れを防ぐ。
+ */
+export function speakWithWarmup(
+  synth: SpeechSynthesis,
+  utterance: SpeechSynthesisUtterance
+): void {
+  const doSpeak = () => {
+    synth.cancel();
+    synth.speak(utterance);
+  };
+
+  if (speechWarmedUp) {
+    doSpeak();
+    return;
+  }
+
+  speechWarmedUp = true;
+  ensureAudioContextResumed().then(() => {
+    const dummy = new SpeechSynthesisUtterance(" ");
+    dummy.volume = 0.01;
+    dummy.rate = 3;
+    dummy.lang = "en-US";
+    dummy.onend = () => {
+      doSpeak();
+    };
+    dummy.onerror = () => {
+      doSpeak();
+    };
+    synth.cancel();
+    synth.speak(dummy);
+  });
+}
 
 const PREFERRED_NAME_PATTERNS: (string | RegExp)[] = [
   "Google US English", // Chrome

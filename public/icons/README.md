@@ -1,8 +1,9 @@
 # PWA Icons
 
-Add the following icon files for the app to be installable with proper icons:
+Add the following icon files to the **`public/`** root (not this folder) so the app is installable with proper icons:
 
-- `icon-192.png` — 192×192 px (any)
-- `icon-512.png` — 512×512 px (any + maskable)
+- `public/icon-192x192.png` — 192×192 px (PWA)
+- `public/icon-512x512.png` — 512×512 px (PWA, maskable)
+- `public/apple-touch-icon.png` — 180×180 px 推奨（iOS ホーム画面アイコン）
 
-You can generate them from a single square image (e.g. 512×512) using a tool like [PWA Asset Generator](https://www.npmjs.com/package/pwa-asset-generator) or any image editor.
+Generate them from a single square image (e.g. 512×512) using [PWA Asset Generator](https://www.npmjs.com/package/pwa-asset-generator) or any image editor.

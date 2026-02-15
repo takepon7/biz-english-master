@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Coffee,
@@ -10,6 +11,9 @@ import {
   ChevronDown,
   Volume2,
   Settings,
+  Crown,
+  Sparkles,
+  CreditCard,
 } from "lucide-react";
 import { UserButton } from "@clerk/nextjs";
 import { useUser } from "@clerk/nextjs";
@@ -19,7 +23,7 @@ import {
   addPracticeItem,
   type PracticeHistoryItem,
 } from "@/lib/practiceHistory";
-import { getPreferredEnglishVoice } from "@/lib/speechVoice";
+import { getPreferredEnglishVoice, speakWithWarmup } from "@/lib/speechVoice";
 import {
   TIMELINE_CATEGORIES,
   getScenarioLabel,
@@ -59,7 +63,6 @@ function HistoryDetailPanel({
   const speak = useCallback((text: string) => {
     if (typeof window === "undefined" || !text.trim()) return;
     const synth = window.speechSynthesis;
-    synth.cancel();
     const u = new SpeechSynthesisUtterance(text.trim());
     u.lang = "en-US";
     u.rate = 0.95;
@@ -67,7 +70,7 @@ function HistoryDetailPanel({
     if (preferred) u.voice = preferred;
     u.onstart = () => setIsSpeaking(true);
     u.onend = u.onerror = () => setIsSpeaking(false);
-    synth.speak(u);
+    speakWithWarmup(synth, u);
   }, []);
 
   useEffect(() => () => window.speechSynthesis?.cancel(), []);
@@ -127,6 +130,11 @@ export default function PracticePage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [historyItems, setHistoryItems] = useState<PracticeHistoryItem[]>([]);
   const [selectedHistoryItem, setSelectedHistoryItem] = useState<PracticeHistoryItem | null>(null);
+  const [isPro, setIsPro] = useState<boolean | null>(null);
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [portalLoading, setPortalLoading] = useState(false);
+  const [portalError, setPortalError] = useState<string | null>(null);
+  const searchParams = useSearchParams();
 
   useEffect(() => {
     setHistoryItems(getPracticeHistory());
@@ -134,6 +142,70 @@ export default function PracticePage() {
 
   useEffect(() => {
     setCompanyCulture(getStoredCompanyCulture());
+  }, []);
+
+  const fetchProStatus = useCallback(() => {
+    fetch("/api/pro-status")
+      .then((res) => (res.ok ? res.json() : { isPro: false }))
+      .then((data) => setIsPro(data.isPro))
+      .catch(() => setIsPro(false));
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/pro-status")
+      .then((res) => res.ok ? res.json() : { isPro: false })
+      .then((data) => { if (!cancelled) setIsPro(data.isPro); })
+      .catch(() => { if (!cancelled) setIsPro(false); });
+    return () => { cancelled = true; };
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (searchParams.get("success") === "1") {
+      fetchProStatus();
+      window.history.replaceState({}, "", "/practice");
+    }
+  }, [searchParams, fetchProStatus]);
+
+  const handleUpgradeToPro = useCallback(async () => {
+    setCheckoutLoading(true);
+    try {
+      const res = await fetch("/api/stripe/checkout", { method: "POST" });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.url) {
+        window.location.href = data.url;
+        return;
+      }
+      setCheckoutLoading(false);
+      if (!res.ok && (data.error ?? data.detail)) {
+        console.error("[Checkout]", data.error, data.detail);
+      }
+    } catch (err) {
+      setCheckoutLoading(false);
+      console.error("[Checkout] Request failed", err);
+    }
+  }, []);
+
+  const handleManageSubscription = useCallback(async () => {
+    setPortalError(null);
+    setPortalLoading(true);
+    try {
+      const res = await fetch("/api/stripe/portal", { method: "POST" });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.url) {
+        window.location.href = data.url;
+        return;
+      }
+      setPortalLoading(false);
+      if (res.status === 400) {
+        setPortalError(data.detail ?? data.error ?? "Stripe でサブスクリプションをお申し込みの方のみ利用できます。");
+      } else if (data.error ?? data.detail) {
+        console.error("[Portal]", data.error, data.detail);
+      }
+    } catch (err) {
+      setPortalLoading(false);
+      console.error("[Portal] Request failed", err);
+    }
   }, []);
 
   const handlePracticeComplete = useCallback((record: PracticeRecord) => {
@@ -234,6 +306,38 @@ export default function PracticePage() {
               <Settings className="h-3.5 w-3.5" />
               Settings
             </p>
+            <div className="mb-3 space-y-2 px-3">
+              {isPro === true ? (
+                <>
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/20 px-2.5 py-1 text-xs font-medium text-amber-300">
+                    <Crown className="h-3.5 w-3.5" />
+                    Pro 会員
+                  </span>
+                  <button
+                    type="button"
+                    onClick={handleManageSubscription}
+                    disabled={portalLoading}
+                    className="inline-flex w-full items-center justify-center gap-1.5 rounded-lg border border-slate-600 bg-slate-800/80 px-3 py-2 text-sm font-medium text-slate-200 transition hover:bg-slate-700 disabled:opacity-50"
+                  >
+                    <CreditCard className="h-4 w-4" />
+                    {portalLoading ? "準備中…" : "プラン管理（解約）"}
+                  </button>
+                  {portalError && (
+                    <p className="text-xs text-amber-400">{portalError}</p>
+                  )}
+                </>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleUpgradeToPro}
+                  disabled={checkoutLoading}
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-amber-500/20 px-3 py-2 text-sm font-medium text-amber-300 transition hover:bg-amber-500/30 disabled:opacity-50"
+                >
+                  <Sparkles className="h-4 w-4" />
+                  {checkoutLoading ? "準備中…" : "Pro プランへアップグレード"}
+                </button>
+              )}
+            </div>
             <p className="mb-1.5 px-3 text-xs text-slate-500">Company Culture（企業文化）</p>
             <select
               value={companyCulture}
@@ -251,6 +355,9 @@ export default function PracticePage() {
                 </option>
               ))}
             </select>
+            <p className="mt-2 px-3 text-xs text-slate-500">
+              ホーム画面に追加するとアプリのように使えます。共有 → 「ホーム画面に追加」で追加できます。
+            </p>
           </div>
 
           <div className="mt-4 border-t border-slate-700/50 pt-3">
@@ -324,8 +431,8 @@ export default function PracticePage() {
                 onShowJapaneseChange={setShowJapanese}
                 companyCulture={companyCulture}
                 userFirstName={userFirstName}
-                userEmail={user?.primaryEmailAddress?.emailAddress ?? undefined}
                 onPracticeComplete={handlePracticeComplete}
+                onUpgradeClick={() => setSidebarOpen(true)}
               />
             </motion.div>
           </AnimatePresence>
