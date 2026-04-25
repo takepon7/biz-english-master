@@ -28,24 +28,11 @@ export async function POST(request: Request) {
     );
   }
 
-  console.log("Webhook received:", event.type);
-
   try {
     switch (event.type) {
       case "checkout.session.completed": {
         const session = event.data.object as Stripe.Checkout.Session;
-        console.log("Session details:", JSON.stringify({
-          id: session.id,
-          client_reference_id: session.client_reference_id,
-          subscription: session.subscription,
-        }));
-
         const userId = session.client_reference_id;
-        console.log("[Stripe webhook] client_reference_id:", {
-          value: userId,
-          type: typeof userId,
-          present: userId != null && String(userId).trim() !== "",
-        });
         if (!userId) {
           console.error(
             "[Stripe webhook] client_reference_id is missing. Possible reasons: " +
@@ -65,7 +52,6 @@ export async function POST(request: Request) {
             ? session.customer
             : (session.customer as { id?: string } | null)?.id ?? null;
 
-        console.log("Attempting to update Clerk user:", userId);
         try {
           const client = await clerkClient();
           await client.users.updateUserMetadata(userId, {
@@ -75,8 +61,6 @@ export async function POST(request: Request) {
               ...(stripeCustomerId && { stripeCustomerId: stripeCustomerId as string }),
             },
           });
-          console.log("Clerk update done");
-          console.log("[Stripe webhook] Clerk metadata updated successfully for userId:", userId);
         } catch (clerkErr) {
           console.error("[Stripe webhook] Clerk update failed for userId:", userId, {
             error: clerkErr,
@@ -96,7 +80,6 @@ export async function POST(request: Request) {
           break;
         }
 
-        console.log("Attempting to update Clerk user (cancelled):", clerkUserId);
         try {
           const client = await clerkClient();
           const user = await client.users.getUser(clerkUserId);
@@ -108,8 +91,6 @@ export async function POST(request: Request) {
               stripeSubscriptionId: null,
             },
           });
-          console.log("Clerk update done (cancelled)");
-          console.log("[Stripe webhook] Clerk metadata (cancelled) updated successfully for userId:", clerkUserId);
         } catch (clerkErr) {
           console.error("[Stripe webhook] Clerk update failed for userId:", clerkUserId, {
             error: clerkErr,

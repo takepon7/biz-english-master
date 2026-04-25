@@ -11,8 +11,6 @@ import {
   type DailyLimitMeta,
 } from "@/lib/dailyLimit";
 
-console.log("★API KEY CHECK:", process.env.GEMINI_API_KEY ? "読み込み成功" : "読み込み失敗");
-
 // オプション: 同一 IP からの過剰アクセス制限は Next.js Middleware + Upstash Redis 等で検討可能
 const MODEL = "gemini-2.5-flash";
 
