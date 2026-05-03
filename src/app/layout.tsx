@@ -24,11 +24,24 @@ const geistMono = Geist_Mono({
 
 const APP_NAME = "Biz English Master";
 const APP_SHORT_NAME = "BizEnglish";
-const APP_DESCRIPTION = "会議・商談・面接のシーンで、AI相手に実践練習。音声入力で即フィードバック。";
 
 export const metadata: Metadata = {
-  title: `${APP_NAME} | ビジネス英会話 反復練習`,
-  description: APP_DESCRIPTION,
+  title: "biz-english-master | 外資で使うビジネス英語を、12シナリオで最短習得",
+  description:
+    "英語が話せないんじゃない、業務で使う英語の '型' を知らないだけ。入社1日目から評価面談まで、外資・グローバル企業で本当に必要なビジネス英語を、12シナリオ × 3企業文化モードで学べる AI ロールプレイサービス。",
+  openGraph: {
+    title: "biz-english-master",
+    description:
+      "外資・グローバル企業で本当に使うビジネス英語を、12シナリオで最短習得。",
+    type: "website",
+    locale: "ja_JP",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "biz-english-master",
+    description:
+      "外資・グローバル企業で本当に使うビジネス英語を、12シナリオで最短習得。",
+  },
   applicationName: APP_NAME,
   manifest: "/manifest.json",
   appleWebApp: {
