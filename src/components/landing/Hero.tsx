@@ -6,7 +6,7 @@ export function Hero() {
     <section className="bg-white">
       <div className="mx-auto max-w-6xl px-4 pt-12 pb-8 sm:px-6 sm:pt-20 sm:pb-12 md:px-8 md:pt-24 md:pb-16">
         <div className="mx-auto max-w-4xl text-center">
-          <h1 className="text-3xl font-bold leading-tight tracking-tight text-gray-900 sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl">
+          <h1 className="text-3xl font-bold leading-tight tracking-tight text-balance text-gray-900 sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl">
             英語が話せないんじゃない。
             <br />
             業務で使う英語の &quot;型&quot; を
@@ -43,7 +43,7 @@ export function Hero() {
             alt="AI と会話しながらビジネス英語を学ぶ画面"
             width={1200}
             height={1000}
-            className="h-auto w-full rounded-2xl shadow-2xl ring-1 ring-gray-200"
+            className="h-auto w-full rounded-2xl border border-gray-100 shadow-2xl ring-1 ring-gray-200/50"
             priority
           />
         </div>

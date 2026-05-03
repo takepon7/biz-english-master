@@ -21,7 +21,7 @@ export function FeaturesSection() {
     <section id="features" className="bg-white">
       <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-20 md:px-8 md:py-24">
         <div className="mx-auto max-w-3xl text-center">
-          <p className="text-sm font-semibold uppercase tracking-widest text-indigo-600">
+          <p className="text-xs font-semibold uppercase tracking-widest text-indigo-600 sm:text-sm md:text-base">
             3つの理由
           </p>
           <h2 className="mt-2 text-3xl font-bold leading-tight text-gray-900 sm:text-4xl lg:text-5xl">
@@ -35,11 +35,11 @@ export function FeaturesSection() {
               key={f.title}
               className="rounded-2xl border border-gray-200 bg-white p-6 md:p-8"
             >
-              <div className="text-4xl">{f.emoji}</div>
+              <div className="text-3xl sm:text-4xl">{f.emoji}</div>
               <h3 className="mt-4 text-lg font-semibold text-gray-900 sm:text-xl">
                 {f.title}
               </h3>
-              <p className="mt-3 text-sm leading-relaxed text-gray-700 sm:text-base">
+              <p className="mt-3 text-sm leading-loose text-gray-700 sm:text-base">
                 {f.body}
               </p>
             </div>

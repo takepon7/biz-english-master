@@ -27,11 +27,11 @@ export function ProblemSection() {
               key={p.title}
               className="rounded-2xl border border-gray-200 bg-white p-6 md:p-8"
             >
-              <div className="text-3xl">❌</div>
+              <div className="text-3xl sm:text-4xl">❌</div>
               <h3 className="mt-4 text-lg font-semibold text-gray-900 sm:text-xl">
                 {p.title}
               </h3>
-              <p className="mt-3 text-sm leading-relaxed text-gray-600 sm:text-base">
+              <p className="mt-3 text-sm leading-loose text-gray-600 sm:text-base">
                 {p.body}
               </p>
             </div>
