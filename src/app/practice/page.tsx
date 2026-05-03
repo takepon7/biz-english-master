@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { Suspense, useState, useEffect, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -122,7 +122,7 @@ function HistoryDetailPanel({
   );
 }
 
-export default function PracticePage() {
+function PracticeContent() {
   const { user } = useUser();
   const [selectedScene, setSelectedScene] = useState<SceneId>("coffee-break");
   const [showJapanese, setShowJapanese] = useState(false);
@@ -439,5 +439,13 @@ export default function PracticePage() {
         )}
       </main>
     </div>
+  );
+}
+
+export default function PracticePage() {
+  return (
+    <Suspense fallback={<div className="flex h-screen items-center justify-center text-gray-600">Loading...</div>}>
+      <PracticeContent />
+    </Suspense>
   );
 }
