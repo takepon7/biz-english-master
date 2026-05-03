@@ -16,24 +16,22 @@ const problems = [
 export function ProblemSection() {
   return (
     <section className="bg-gray-50">
-      <div className="mx-auto max-w-6xl px-4 py-20 sm:px-6 sm:py-24">
-        <h2 className="mx-auto max-w-3xl text-center text-3xl font-bold leading-tight text-gray-900 sm:text-4xl">
-          英語が話せないんじゃない。
-          <br />
-          業務で使う英語の&quot;型&quot;を知らないだけ。
+      <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-20 md:px-8 md:py-24">
+        <h2 className="mx-auto max-w-3xl text-center text-3xl font-bold leading-tight text-gray-900 sm:text-4xl lg:text-5xl">
+          こんな悩み、ありませんか?
         </h2>
 
-        <div className="mt-14 grid grid-cols-1 gap-6 md:grid-cols-3">
+        <div className="mt-10 grid grid-cols-1 gap-5 sm:mt-12 sm:gap-6 md:mt-14 md:grid-cols-3">
           {problems.map((p) => (
             <div
               key={p.title}
-              className="rounded-2xl border border-gray-200 bg-white p-6 sm:p-8"
+              className="rounded-2xl border border-gray-200 bg-white p-6 md:p-8"
             >
               <div className="text-3xl">❌</div>
-              <h3 className="mt-4 text-lg font-semibold text-gray-900">
+              <h3 className="mt-4 text-lg font-semibold text-gray-900 sm:text-xl">
                 {p.title}
               </h3>
-              <p className="mt-3 text-sm leading-relaxed text-gray-600">
+              <p className="mt-3 text-sm leading-relaxed text-gray-600 sm:text-base">
                 {p.body}
               </p>
             </div>

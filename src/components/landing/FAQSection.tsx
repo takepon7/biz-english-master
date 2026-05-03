@@ -28,16 +28,16 @@ const faqs = [
 export function FAQSection() {
   return (
     <section className="bg-gray-50">
-      <div className="mx-auto max-w-3xl px-4 py-20 sm:px-6 sm:py-24">
-        <h2 className="text-center text-3xl font-bold leading-tight text-gray-900 sm:text-4xl">
+      <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6 sm:py-20 md:px-8 md:py-24">
+        <h2 className="mb-12 text-center text-3xl font-bold leading-tight text-gray-900 sm:text-4xl lg:text-5xl">
           よくある質問
         </h2>
 
-        <div className="mt-12 flex flex-col gap-3">
+        <div className="flex flex-col gap-3">
           {faqs.map((item) => (
             <details
               key={item.q}
-              className="group rounded-2xl border border-gray-200 bg-white px-6 py-4 shadow-sm transition open:shadow-md sm:px-7 sm:py-5"
+              className="group rounded-2xl border border-gray-200 bg-white px-5 py-4 shadow-sm transition open:shadow-md sm:px-7 sm:py-5"
             >
               <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-base font-semibold text-gray-900 sm:text-lg">
                 <span>Q. {item.q}</span>

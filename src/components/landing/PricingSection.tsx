@@ -11,23 +11,25 @@ const features = [
 
 export function PricingSection() {
   return (
-    <section id="pricing" className="bg-white">
-      <div className="mx-auto max-w-6xl px-4 py-20 sm:px-6 sm:py-24">
-        <h2 className="text-center text-3xl font-bold leading-tight text-gray-900 sm:text-4xl">
+    <section id="pricing" className="bg-gradient-to-b from-indigo-50/40 via-white to-white">
+      <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-20 md:px-8 md:py-24">
+        <h2 className="text-center text-3xl font-bold leading-tight text-gray-900 sm:text-4xl lg:text-5xl">
           シンプルな1プラン
         </h2>
 
-        <div className="mx-auto mt-12 max-w-md">
-          <div className="rounded-2xl border border-gray-200 bg-white p-8 shadow-lg sm:p-10">
+        <div className="mx-auto mt-10 w-full max-w-md sm:mt-12">
+          <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-lg md:p-8 lg:p-10">
             <div className="text-center">
               <div className="flex items-baseline justify-center gap-1">
-                <span className="text-5xl font-bold text-gray-900">¥2,980</span>
-                <span className="text-lg text-gray-600">/月</span>
+                <span className="text-4xl font-bold text-gray-900 sm:text-5xl">
+                  ¥2,980
+                </span>
+                <span className="text-base text-gray-600 sm:text-lg">/月</span>
               </div>
               <p className="mt-1 text-sm text-gray-500">(税抜)</p>
             </div>
 
-            <ul className="mt-8 space-y-3">
+            <ul className="mt-6 space-y-3 sm:mt-8">
               {features.map((f) => (
                 <li key={f} className="flex items-start gap-3">
                   <svg
@@ -42,12 +44,12 @@ export function PricingSection() {
                       clipRule="evenodd"
                     />
                   </svg>
-                  <span className="text-base text-gray-700">{f}</span>
+                  <span className="text-sm text-gray-700 sm:text-base">{f}</span>
                 </li>
               ))}
             </ul>
 
-            <div className="mt-8 rounded-lg bg-gray-50 p-4 text-center">
+            <div className="mt-6 rounded-lg bg-gray-50 p-4 text-center sm:mt-8">
               <p className="text-sm font-semibold text-gray-900">
                 7日間無料トライアル
               </p>
@@ -56,7 +58,7 @@ export function PricingSection() {
 
             <Link
               href="/sign-up"
-              className="mt-6 flex w-full items-center justify-center rounded-lg bg-indigo-600 px-6 py-4 text-base font-semibold text-white shadow-sm transition hover:bg-indigo-500"
+              className="mt-6 flex w-full items-center justify-center rounded-lg bg-indigo-600 px-6 py-4 text-base font-semibold text-white shadow-lg shadow-indigo-500/30 transition hover:bg-indigo-500"
             >
               今すぐ始める
             </Link>

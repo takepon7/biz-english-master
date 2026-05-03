@@ -19,27 +19,27 @@ const features = [
 export function FeaturesSection() {
   return (
     <section id="features" className="bg-white">
-      <div className="mx-auto max-w-6xl px-4 py-20 sm:px-6 sm:py-24">
+      <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-20 md:px-8 md:py-24">
         <div className="mx-auto max-w-3xl text-center">
-          <p className="text-sm font-semibold uppercase tracking-wide text-indigo-600">
+          <p className="text-sm font-semibold uppercase tracking-widest text-indigo-600">
             3つの理由
           </p>
-          <h2 className="mt-3 text-3xl font-bold leading-tight text-gray-900 sm:text-4xl">
+          <h2 className="mt-2 text-3xl font-bold leading-tight text-gray-900 sm:text-4xl lg:text-5xl">
             biz-english-master が選ばれる
           </h2>
         </div>
 
-        <div className="mt-14 grid grid-cols-1 gap-6 md:grid-cols-3">
+        <div className="mt-10 grid grid-cols-1 gap-5 sm:mt-12 sm:gap-6 md:mt-14 md:grid-cols-3">
           {features.map((f) => (
             <div
               key={f.title}
-              className="rounded-2xl border border-gray-200 bg-white p-6 sm:p-8"
+              className="rounded-2xl border border-gray-200 bg-white p-6 md:p-8"
             >
               <div className="text-4xl">{f.emoji}</div>
-              <h3 className="mt-4 text-xl font-semibold text-gray-900">
+              <h3 className="mt-4 text-lg font-semibold text-gray-900 sm:text-xl">
                 {f.title}
               </h3>
-              <p className="mt-3 text-base leading-relaxed text-gray-700">
+              <p className="mt-3 text-sm leading-relaxed text-gray-700 sm:text-base">
                 {f.body}
               </p>
             </div>

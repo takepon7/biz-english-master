@@ -38,9 +38,9 @@ const phases: { phase: string; description: string; scenarios: Scenario[] }[] = 
 export function ScenariosSection() {
   return (
     <section className="bg-gray-50">
-      <div className="mx-auto max-w-6xl px-4 py-20 sm:px-6 sm:py-24">
+      <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6 sm:py-20 md:px-8 md:py-24">
         <div className="mx-auto max-w-3xl text-center">
-          <h2 className="text-3xl font-bold leading-tight text-gray-900 sm:text-4xl">
+          <h2 className="text-3xl font-bold leading-tight text-gray-900 sm:text-4xl lg:text-5xl">
             12のシナリオ × 3つのフェーズ
           </h2>
           <p className="mt-4 text-base text-gray-600 sm:text-lg">
@@ -48,26 +48,30 @@ export function ScenariosSection() {
           </p>
         </div>
 
-        <div className="mx-auto mt-12 flex max-w-3xl flex-col gap-6">
+        <div className="mx-auto mt-10 flex max-w-3xl flex-col gap-5 sm:mt-12 sm:gap-6">
           {phases.map((p) => (
             <div
               key={p.phase}
-              className="rounded-2xl border border-gray-200 bg-white p-6 sm:p-8"
+              className="rounded-2xl border border-gray-200 bg-white p-6 md:p-8"
             >
               <div className="flex flex-col gap-1 border-b border-gray-100 pb-4 sm:flex-row sm:items-baseline sm:gap-3">
-                <h3 className="text-2xl font-bold text-indigo-600">{p.phase}</h3>
+                <h3 className="text-xl font-bold text-indigo-600 sm:text-2xl">
+                  {p.phase}
+                </h3>
                 <span className="text-sm text-gray-500 sm:text-base">
                   ── {p.description}
                 </span>
               </div>
-              <ul className="mt-4 space-y-3">
+              <ul className="mt-4 space-y-4 sm:space-y-3">
                 {p.scenarios.map((s) => (
                   <li
                     key={s.title}
-                    className="flex items-start gap-3 sm:items-center"
+                    className="flex items-start gap-4 sm:items-center sm:gap-3"
                   >
-                    <span className="mt-0.5 text-xl sm:mt-0">{s.emoji}</span>
-                    <div className="flex flex-col gap-0.5 sm:flex-row sm:items-baseline sm:gap-3">
+                    <span className="mt-0.5 flex-shrink-0 text-2xl leading-none sm:mt-0 sm:text-xl">
+                      {s.emoji}
+                    </span>
+                    <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:gap-3">
                       <span className="font-semibold text-gray-900">
                         {s.title}
                       </span>
@@ -82,7 +86,7 @@ export function ScenariosSection() {
           ))}
         </div>
 
-        <div className="mx-auto mt-14 max-w-3xl">
+        <div className="mx-auto mt-12 max-w-3xl sm:mt-14">
           <Image
             src="/landing/screenshot-scenes.png"
             alt="12シナリオが並ぶサイドバー"
