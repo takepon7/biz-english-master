@@ -64,6 +64,7 @@ export async function POST() {
       // Webhook でユーザー特定に必須。無いと checkout.session.completed で Clerk を更新できない
       client_reference_id: userId,
       subscription_data: {
+        trial_period_days: 7,
         metadata: {
           clerk_user_id: userId,
         },
