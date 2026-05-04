@@ -1,0 +1,213 @@
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "利用規約 | biz-english-master",
+  description: "biz-english-master の利用規約。",
+};
+
+export default function TermsPage() {
+  return (
+    <main className="min-h-screen bg-white px-4 sm:px-6 py-16">
+      <div className="max-w-3xl mx-auto">
+        <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-8">
+          利用規約
+        </h1>
+
+        <p className="text-base text-gray-700 leading-loose mb-4">
+          この利用規約(以下「本規約」といいます)は、武田　遼介(以下「当方」といいます)が提供するオンラインサービス「ビジネス英語コーチング Pro」(以下「本サービス」といいます)の利用条件を定めるものです。
+        </p>
+        <p className="text-base text-gray-700 leading-loose mb-12">
+          登録ユーザーの皆さま(以下「ユーザー」といいます)には、本規約に従って、本サービスをご利用いただきます。
+        </p>
+
+        <section className="mb-10">
+          <h2 className="text-xl font-bold text-gray-900 mb-4">第1条 (適用)</h2>
+          <ol className="list-decimal list-inside text-base text-gray-700 leading-loose space-y-2">
+            <li>本規約は、ユーザーと当方との間の本サービスの利用に関わる一切の関係に適用されるものとします。</li>
+            <li>当方は本サービスに関し、本規約のほか、ご利用にあたってのルール等、各種の定め(以下「個別規定」といいます)をすることがあります。これら個別規定はその名称のいかんに関わらず、本規約の一部を構成するものとします。</li>
+            <li>本規約の規定が前条の個別規定の規定と矛盾する場合には、個別規定において特段の定めなき限り、個別規定の規定が優先されるものとします。</li>
+          </ol>
+        </section>
+
+        <section className="mb-10">
+          <h2 className="text-xl font-bold text-gray-900 mb-4">第2条 (利用登録)</h2>
+          <ol className="list-decimal list-inside text-base text-gray-700 leading-loose space-y-2">
+            <li>本サービスの利用を希望する者(以下「登録希望者」といいます)は、本規約を遵守することに同意し、かつ当方の定める一定の情報(以下「登録事項」といいます)を当方の定める方法で当方に提供することにより、当方に対し、本サービスの利用の登録を申請することができます。</li>
+            <li>当方は、当方の基準に従って、第1項に基づいて登録申請を行った登録希望者の登録の可否を判断し、当方が登録を認める場合にはその旨を登録希望者に通知します。登録希望者の利用登録は、当方が本項の通知を行ったことをもって完了したものとします。</li>
+            <li>前項に定める利用登録の完了時に、本規約の諸規定に従った本サービスの利用契約がユーザーと当方との間に成立し、ユーザーは本サービスを当方の定める方法で利用することができるようになります。</li>
+            <li>
+              当方は、登録申請者が、以下の各号のいずれかの事由に該当する場合は、登録申請を承認しないことがあり、その理由については一切の開示義務を負わないものとします。
+              <ol className="list-decimal list-inside text-gray-700 leading-loose space-y-1 mt-2 ml-6">
+                <li>当方に提供した登録事項の全部または一部につき虚偽、誤記または記載漏れがあった場合</li>
+                <li>未成年者、成年被後見人、被保佐人または被補助人のいずれかであり、法定代理人、後見人、保佐人または補助人の同意等を得ていなかった場合</li>
+                <li>反社会的勢力等(暴力団、暴力団員、右翼団体、反社会的勢力、その他これに準ずる者を意味します。以下同じ。)である、または資金提供その他を通じて反社会的勢力等の維持、運営もしくは経営に協力もしくは関与する等反社会的勢力等との何らかの交流もしくは関与を行っていると当方が判断した場合</li>
+                <li>過去当方との契約に違反した者またはその関係者であると当方が判断した場合</li>
+                <li>その他、登録を相当でないと当方が判断した場合</li>
+              </ol>
+            </li>
+          </ol>
+        </section>
+
+        <section className="mb-10">
+          <h2 className="text-xl font-bold text-gray-900 mb-4">第3条 (ユーザー ID およびパスワードの管理)</h2>
+          <ol className="list-decimal list-inside text-base text-gray-700 leading-loose space-y-2">
+            <li>ユーザーは、自己の責任において、本サービスのユーザー ID およびパスワードを適切に管理するものとします。</li>
+            <li>ユーザーは、いかなる場合にも、ユーザー ID およびパスワードを第三者に譲渡または貸与し、もしくは第三者と共用することはできません。当方は、ユーザー ID とパスワードの組み合わせが登録情報と一致してログインされた場合には、そのユーザー ID を登録しているユーザー自身による利用とみなします。</li>
+            <li>ユーザー ID およびパスワードが第三者によって使用されたことによって生じた損害は、当方に故意または重大な過失がある場合を除き、当方は一切の責任を負わないものとします。</li>
+          </ol>
+        </section>
+
+        <section className="mb-10">
+          <h2 className="text-xl font-bold text-gray-900 mb-4">第4条 (利用料金および支払方法)</h2>
+          <ol className="list-decimal list-inside text-base text-gray-700 leading-loose space-y-2">
+            <li>ユーザーは、本サービスの有料部分の対価として、当方が別途定め、本ウェブサイトに表示する利用料金を、当方が指定する方法により支払うものとします。</li>
+            <li>本サービスは月額制のサブスクリプション形態であり、利用料金は毎月自動的に課金されます。</li>
+            <li>新規登録時には、無料トライアル期間(7日間)が適用されます。トライアル期間中の解約には費用が発生しません。</li>
+            <li>ユーザーが利用料金の支払を遅滞した場合には、ユーザーは年14.6%の割合による遅延損害金を支払うものとします。</li>
+          </ol>
+        </section>
+
+        <section className="mb-10">
+          <h2 className="text-xl font-bold text-gray-900 mb-4">第5条 (禁止事項)</h2>
+          <p className="text-base text-gray-700 leading-loose mb-4">
+            ユーザーは、本サービスの利用にあたり、以下の行為をしてはなりません。
+          </p>
+          <ol className="list-decimal list-inside text-base text-gray-700 leading-loose space-y-1">
+            <li>法令または公序良俗に違反する行為</li>
+            <li>犯罪行為に関連する行為</li>
+            <li>当方、本サービスの他のユーザー、または第三者のサーバーまたはネットワークの機能を破壊したり、妨害したりする行為</li>
+            <li>当方のサービスの運営を妨害するおそれのある行為</li>
+            <li>他のユーザーに関する個人情報等を収集または蓄積する行為</li>
+            <li>不正アクセスをし、またはこれを試みる行為</li>
+            <li>他のユーザーに成りすます行為</li>
+            <li>当方のサービスに関連して、反社会的勢力に対して直接または間接に利益を供与する行為</li>
+            <li>当方、本サービスの他のユーザーまたは第三者の知的財産権、肖像権、プライバシー、名誉その他の権利または利益を侵害する行為</li>
+            <li>本サービスを通じて入手した情報を、当方の事前の許諾なく、複製、転売、出版、放送、公衆送信等する行為</li>
+            <li>当方が認めない方法で、本サービスを通じて生成された AI 出力を商用利用する行為</li>
+            <li>本サービスの内容を、リバースエンジニアリング、逆コンパイル、逆アセンブルする行為</li>
+            <li>その他、当方が不適切と判断する行為</li>
+          </ol>
+        </section>
+
+        <section className="mb-10">
+          <h2 className="text-xl font-bold text-gray-900 mb-4">第6条 (本サービスの提供の停止等)</h2>
+          <ol className="list-decimal list-inside text-base text-gray-700 leading-loose space-y-2">
+            <li>
+              当方は、以下のいずれかの事由があると判断した場合、ユーザーに事前に通知することなく本サービスの全部または一部の提供を停止または中断することができるものとします。
+              <ol className="list-decimal list-inside text-gray-700 leading-loose space-y-1 mt-2 ml-6">
+                <li>本サービスにかかるコンピューターシステムの保守点検または更新を行う場合</li>
+                <li>地震、落雷、火災、停電または天災などの不可抗力により、本サービスの提供が困難となった場合</li>
+                <li>コンピューターまたは通信回線等が事故により停止した場合</li>
+                <li>本サービスの提供に必要な外部サービス(Clerk、Stripe、Google Gemini API、Vercel 等)に障害が発生した場合</li>
+                <li>その他、当方が本サービスの提供が困難と判断した場合</li>
+              </ol>
+            </li>
+            <li>当方は、本サービスの提供の停止または中断により、ユーザーまたは第三者が被ったいかなる不利益または損害についても、一切の責任を負わないものとします。</li>
+          </ol>
+        </section>
+
+        <section className="mb-10">
+          <h2 className="text-xl font-bold text-gray-900 mb-4">第7条 (著作権)</h2>
+          <ol className="list-decimal list-inside text-base text-gray-700 leading-loose space-y-2">
+            <li>ユーザーは、自ら著作権等の必要な知的財産権を有するか、または必要な権利者の許諾を得た文章、画像や映像等の情報に関してのみ、本サービスを利用し、投稿ないしアップロードすることができるものとします。</li>
+            <li>ユーザーが本サービスを利用して投稿ないしアップロードした文章、画像、映像等の著作権については、当該ユーザーその他既存の権利者に留保されるものとします。ただし、当方は、本サービスを利用して投稿ないしアップロードされた文章、画像、映像等について、本サービスの改善、品質向上、または不適切利用の防止等のために必要な範囲で、これを無償で利用する権利を有するものとします。</li>
+            <li>本サービスおよび本サービスに関連する一切の情報についての著作権およびその他の知的財産権は、すべて当方または当方にその利用を許諾した権利者に帰属し、ユーザーは無断で複製、譲渡、貸与、翻訳、改変、転載、公衆送信(送信可能化を含みます)、伝送、配布、出版、営業使用等をしてはならないものとします。</li>
+          </ol>
+        </section>
+
+        <section className="mb-10">
+          <h2 className="text-xl font-bold text-gray-900 mb-4">第8条 (利用制限および登録抹消)</h2>
+          <ol className="list-decimal list-inside text-base text-gray-700 leading-loose space-y-2">
+            <li>
+              当方は、ユーザーが以下のいずれかに該当する場合には、事前の通知なく、ユーザーに対して、本サービスの全部もしくは一部の利用を制限し、またはユーザーとしての登録を抹消することができるものとします。
+              <ol className="list-decimal list-inside text-gray-700 leading-loose space-y-1 mt-2 ml-6">
+                <li>本規約のいずれかの条項に違反した場合</li>
+                <li>登録事項に虚偽の事実があることが判明した場合</li>
+                <li>料金等の支払債務の不履行があった場合</li>
+                <li>当方からの連絡に対し、一定期間返答がない場合</li>
+                <li>本サービスについて、最終の利用から一定期間利用がない場合</li>
+                <li>その他、当方が本サービスの利用を適当でないと判断した場合</li>
+              </ol>
+            </li>
+            <li>当方は、本条に基づき当方が行った行為によりユーザーに生じた損害について、一切の責任を負いません。</li>
+          </ol>
+        </section>
+
+        <section className="mb-10">
+          <h2 className="text-xl font-bold text-gray-900 mb-4">第9条 (退会)</h2>
+          <p className="text-base text-gray-700 leading-loose">
+            ユーザーは、当方の定める退会手続により、本サービスから退会できるものとします。
+          </p>
+        </section>
+
+        <section className="mb-10">
+          <h2 className="text-xl font-bold text-gray-900 mb-4">第10条 (保証の否認および免責事項)</h2>
+          <ol className="list-decimal list-inside text-base text-gray-700 leading-loose space-y-2">
+            <li>当方は、本サービスに事実上または法律上の瑕疵(安全性、信頼性、正確性、完全性、有効性、特定の目的への適合性、セキュリティなどに関する欠陥、エラーやバグ、権利侵害などを含みます。)がないことを明示的にも黙示的にも保証しておりません。</li>
+            <li>当方は、本サービスに起因してユーザーに生じたあらゆる損害について、当方の故意または重過失による場合を除き、一切の責任を負いません。</li>
+            <li>前項ただし書に定める場合であっても、当方は、当方の過失(重過失を除きます。)による債務不履行または不法行為によりユーザーに生じた損害のうち特別な事情から生じた損害(当方またはユーザーが損害発生につき予見し、または予見し得た場合を含みます。)について一切の責任を負いません。また、当方の過失(重過失を除きます。)による債務不履行または不法行為によりユーザーに生じた損害の賠償は、ユーザーから当該損害が発生した月に受領した利用料の額を上限とします。</li>
+            <li>当方は、本サービスに関して、ユーザーと他のユーザーまたは第三者との間において生じた取引、連絡または紛争等について一切責任を負いません。</li>
+            <li>本サービスは、AI を活用した英会話練習を提供しますが、AI の出力内容は完全性・正確性を保証するものではありません。実際のビジネスシーンで使用する英語表現については、必要に応じてネイティブスピーカーや専門家にご確認ください。</li>
+          </ol>
+        </section>
+
+        <section className="mb-10">
+          <h2 className="text-xl font-bold text-gray-900 mb-4">第11条 (サービス内容の変更等)</h2>
+          <p className="text-base text-gray-700 leading-loose">
+            当方は、ユーザーへの事前の告知をもって、本サービスの内容を変更、追加または廃止することがあり、ユーザーはこれを承諾するものとします。
+          </p>
+        </section>
+
+        <section className="mb-10">
+          <h2 className="text-xl font-bold text-gray-900 mb-4">第12条 (利用規約の変更)</h2>
+          <p className="text-base text-gray-700 leading-loose mb-4">
+            当方は以下の場合には、ユーザーの個別の同意を要せず、本規約を変更することができるものとします。
+          </p>
+          <ol className="list-decimal list-inside text-base text-gray-700 leading-loose space-y-1">
+            <li>本規約の変更がユーザーの一般の利益に適合するとき。</li>
+            <li>本規約の変更が本サービス利用契約の目的に反せず、かつ、変更の必要性、変更後の内容の相当性その他の変更に係る事情に照らして合理的なものであるとき。</li>
+          </ol>
+          <p className="text-base text-gray-700 leading-loose mt-4">
+            当方はユーザーに対し、前項による本規約の変更にあたり、事前に、本規約を変更する旨及び変更後の本規約の内容並びにその効力発生時期を通知します。
+          </p>
+        </section>
+
+        <section className="mb-10">
+          <h2 className="text-xl font-bold text-gray-900 mb-4">第13条 (個人情報の取扱い)</h2>
+          <p className="text-base text-gray-700 leading-loose">
+            当方は、本サービスの利用によって取得する個人情報については、当方「プライバシーポリシー」に従い適切に取り扱うものとします。
+          </p>
+        </section>
+
+        <section className="mb-10">
+          <h2 className="text-xl font-bold text-gray-900 mb-4">第14条 (通知または連絡)</h2>
+          <p className="text-base text-gray-700 leading-loose mb-4">
+            ユーザーと当方との間の通知または連絡は、当方の定める方法によって行うものとします。
+          </p>
+          <p className="text-base text-gray-700 leading-loose">
+            当方は、ユーザーから、当方が別途定める方式に従った変更届け出がない限り、現在登録されている連絡先が有効なものとみなして当該連絡先へ通知または連絡を行い、これらは、発信時にユーザーへ到達したものとみなします。
+          </p>
+        </section>
+
+        <section className="mb-10">
+          <h2 className="text-xl font-bold text-gray-900 mb-4">第15条 (権利義務の譲渡の禁止)</h2>
+          <p className="text-base text-gray-700 leading-loose">
+            ユーザーは、当方の書面による事前の承諾なく、利用契約上の地位または本規約に基づく権利もしくは義務を第三者に譲渡し、または担保に供することはできません。
+          </p>
+        </section>
+
+        <section className="mb-10">
+          <h2 className="text-xl font-bold text-gray-900 mb-4">第16条 (準拠法・裁判管轄)</h2>
+          <ol className="list-decimal list-inside text-base text-gray-700 leading-loose space-y-2">
+            <li>本規約の解釈にあたっては、日本法を準拠法とします。</li>
+            <li>本サービスに関して紛争が生じた場合には、当方の所在地を管轄する裁判所を専属的合意管轄とします。</li>
+          </ol>
+        </section>
+
+        <p className="mt-12 text-sm text-gray-500">
+          制定日: 2026年5月4日
+        </p>
+      </div>
+    </main>
+  );
+}

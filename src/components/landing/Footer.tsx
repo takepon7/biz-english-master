@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export function Footer() {
   return (
     <footer className="bg-gray-900">
@@ -11,32 +13,32 @@ export function Footer() {
 
           <ul className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:gap-x-6 sm:gap-y-2">
             <li>
-              <a
-                href="#"
+              <Link
+                href="/terms"
                 className="text-sm text-gray-400 transition-colors hover:text-white"
               >
                 利用規約
-              </a>
+              </Link>
             </li>
             <li>
-              <a
-                href="#"
+              <Link
+                href="/privacy"
                 className="text-sm text-gray-400 transition-colors hover:text-white"
               >
                 プライバシーポリシー
-              </a>
+              </Link>
             </li>
             <li>
-              <a
-                href="#"
+              <Link
+                href="/legal"
                 className="text-sm text-gray-400 transition-colors hover:text-white"
               >
                 特定商取引法に基づく表記
-              </a>
+              </Link>
             </li>
             <li>
               <a
-                href="#"
+                href="mailto:takeponn7@gmail.com"
                 className="text-sm text-gray-400 transition-colors hover:text-white"
               >
                 お問い合わせ
