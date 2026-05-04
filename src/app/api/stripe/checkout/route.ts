@@ -47,7 +47,7 @@ export async function POST() {
 
   const origin = process.env.NEXT_PUBLIC_APP_URL ?? process.env.VERCEL_URL ?? "http://localhost:3000";
   const baseUrl = origin.startsWith("http") ? origin : `https://${origin}`;
-  const successUrl = `${baseUrl}/practice?success=1`;
+  const successUrl = `${baseUrl}/payment-success`;
   const cancelUrl = `${baseUrl}/practice`;
 
   try {
