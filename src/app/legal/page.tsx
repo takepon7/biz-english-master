@@ -6,6 +6,7 @@ export const metadata: Metadata = {
 };
 
 export default function LegalPage() {
+  const email = process.env.NEXT_PUBLIC_LEGAL_EMAIL ?? "[メールアドレス]";
   return (
     <main className="min-h-screen bg-white px-4 sm:px-6 py-16">
       <div className="max-w-3xl mx-auto">
@@ -56,10 +57,10 @@ export default function LegalPage() {
             </dt>
             <dd className="text-base text-gray-900">
               <a
-                href="mailto:takeponn7@gmail.com"
+                href={`mailto:${email}`}
                 className="text-indigo-600 hover:text-indigo-500"
               >
-                takeponn7@gmail.com
+                {email}
               </a>
             </dd>
           </div>
