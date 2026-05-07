@@ -45,9 +45,9 @@ export function speakWithWarmup(
 
   speechWarmedUp = true;
   ensureAudioContextResumed().then(() => {
-    const dummy = new SpeechSynthesisUtterance(" ");
+    const dummy = new SpeechSynthesisUtterance("Hello.");
     dummy.volume = 0.01;
-    dummy.rate = 3;
+    dummy.rate = 1.0;
     dummy.lang = "en-US";
     dummy.onend = () => {
       doSpeak();
